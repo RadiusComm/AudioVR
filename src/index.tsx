@@ -271,6 +271,110 @@ app.post('/api/clues/:clueId/analyze', async (c) => {
   }
 });
 
+// Generate custom audio for clues (using ElevenLabs API)
+app.post('/api/audio/generate', async (c) => {
+  const { env } = c;
+  const { text, voiceId = 'EXAVITQu4vr4xnSDxMaL', clueId } = await c.req.json();
+  
+  // Only proceed if we have the API key
+  if (!env.ELEVENLABS_API_KEY) {
+    return c.json({ error: 'Audio generation not configured' }, 500);
+  }
+  
+  try {
+    // Call ElevenLabs Text-to-Speech API
+    const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'audio/mpeg',
+        'Content-Type': 'application/json',
+        'xi-api-key': env.ELEVENLABS_API_KEY
+      },
+      body: JSON.stringify({
+        text: text,
+        model_id: 'eleven_monolingual_v1',
+        voice_settings: {
+          stability: 0.5,
+          similarity_boost: 0.5
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to generate audio');
+    }
+    
+    // Get audio data
+    const audioBuffer = await response.arrayBuffer();
+    
+    // Store in R2 bucket if available
+    if (env.MEDIA_STORAGE && clueId) {
+      const key = `audio/clues/${clueId}_${Date.now()}.mp3`;
+      await env.MEDIA_STORAGE.put(key, audioBuffer, {
+        httpMetadata: {
+          contentType: 'audio/mpeg'
+        }
+      });
+      
+      // Update clue with audio URL
+      await env.DB.prepare(`
+        UPDATE clues SET audio_url = ? WHERE clue_id = ?
+      `).bind(key, clueId).run();
+      
+      return c.json({ 
+        success: true, 
+        audioKey: key,
+        message: 'Audio generated and stored' 
+      });
+    }
+    
+    // Return audio directly if no storage
+    return new Response(audioBuffer, {
+      headers: {
+        'Content-Type': 'audio/mpeg'
+      }
+    });
+    
+  } catch (error) {
+    console.error('Audio generation error:', error);
+    return c.json({ error: 'Failed to generate audio' }, 500);
+  }
+});
+
+// Get available voices from ElevenLabs
+app.get('/api/voices', async (c) => {
+  const { env } = c;
+  
+  if (!env.ELEVENLABS_API_KEY) {
+    // Return default voices if no API key
+    return c.json({
+      voices: [
+        { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Default Male' },
+        { voice_id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Default Female' }
+      ]
+    });
+  }
+  
+  try {
+    const response = await fetch('https://api.elevenlabs.io/v1/voices', {
+      headers: {
+        'xi-api-key': env.ELEVENLABS_API_KEY
+      }
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch voices');
+    }
+    
+    const data = await response.json();
+    return c.json(data);
+    
+  } catch (error) {
+    console.error('Failed to fetch voices:', error);
+    return c.json({ error: 'Failed to fetch voices' }, 500);
+  }
+});
+
 // Save session
 app.post('/api/session/save', async (c) => {
   const { env } = c;

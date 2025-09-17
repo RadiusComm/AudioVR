@@ -66,6 +66,8 @@
 - `/api/clues/:clueId/analyze` - Analyze clue (premium)
 - `/api/session/save` - Save current session
 - `/api/session/restore/:userId` - Restore previous session
+- `/api/audio/generate` - Generate custom audio for clues (ElevenLabs TTS)
+- `/api/voices` - Get available ElevenLabs voices
 
 ### 8. **UI/UX Features**
 - Glassmorphic design with blur effects
@@ -193,18 +195,22 @@
 - **Tech Stack**: Hono + TypeScript + Vanilla JS + TailwindCSS
 - **Last Updated**: 2025-09-17
 
-### Environment Variables Needed:
+### Environment Variables Configured:
 ```env
-# ElevenLabs widget is configured directly in HTML with agent ID
-# No API key needed for embedded widget
+# ElevenLabs API Key (configured in .dev.vars)
+ELEVENLABS_API_KEY=✅ Configured
+
+# Optional integrations
 SUPABASE_URL=your_supabase_url (optional)
 SUPABASE_ANON_KEY=your_supabase_key (optional)
 ```
 
-### ElevenLabs Widget Configuration:
+### ElevenLabs Configuration:
 - **Agent ID**: `agent_2901k5ce2hyrendtmhzd8r2ayyk5` (embedded in HTML)
+- **API Key**: ✅ Configured in `.dev.vars` for server-side features
 - **Widget Source**: `https://unpkg.com/@elevenlabs/convai-widget-embed`
 - **Integration**: Automatic with message event listeners
+- **Server Features**: Audio generation, voice listing, custom TTS
 
 ### Deployment Commands:
 ```bash
@@ -220,8 +226,9 @@ npx wrangler d1 create audiovr-db
 # Apply migrations
 npx wrangler d1 migrations apply audiovr-db
 
-# Add secrets
+# Add secrets (API key already configured locally)
 npx wrangler pages secret put ELEVENLABS_API_KEY --project-name audiovr
+# When prompted, enter: 9edb698d39ffb153c2734d49cdd16f68edf910d4924e72c832da3d853bc3e02d
 ```
 
 ## 📝 Development Notes
