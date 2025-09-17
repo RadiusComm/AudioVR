@@ -88,6 +88,9 @@ class AudioVR {
     }
 
     showWorldSelection() {
+        // Update body class for widget management
+        document.body.className = 'bg-gray-900 text-white min-h-screen world-selection';
+        
         const app = document.getElementById('app');
         app.innerHTML = `
             <div class="pt-20 px-4 fade-in">
@@ -146,6 +149,9 @@ class AudioVR {
     }
 
     async showDesk(worldKey) {
+        // Update body class
+        document.body.className = 'bg-gray-900 text-white min-h-screen desk-view';
+        
         const app = document.getElementById('app');
         
         // Get world data
@@ -261,6 +267,9 @@ class AudioVR {
     }
 
     showCaseScene(caseInfo) {
+        // Update body class to show widget
+        document.body.className = 'bg-gray-900 text-white min-h-screen case-scene';
+        
         const app = document.getElementById('app');
         
         app.innerHTML = `
@@ -273,7 +282,7 @@ class AudioVR {
                         
                         <!-- ElevenLabs Widget Container -->
                         <div id="convai-container" class="mb-6">
-                            <!-- The widget will be embedded here -->
+                            <elevenlabs-convai agent-id="agent_2901k5ce2hyrendtmhzd8r2ayyk5"></elevenlabs-convai>
                         </div>
                         
                         <!-- Transcript Drawer -->
@@ -328,6 +337,9 @@ class AudioVR {
     }
 
     async showInbox() {
+        // Update body class
+        document.body.className = 'bg-gray-900 text-white min-h-screen inbox-view';
+        
         try {
             const response = await axios.get(`/api/inbox/${this.userId}`);
             const items = response.data.results || [];
@@ -473,4 +485,34 @@ class AudioVR {
 // Initialize application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
     window.audioVR = new AudioVR();
+    
+    // Listen for ElevenLabs widget events
+    window.addEventListener('message', (event) => {
+        // Handle messages from the ElevenLabs widget
+        if (event.data && event.data.type === 'elevenlabs-convai') {
+            if (event.data.event === 'message' && window.audioVR) {
+                // Add messages to transcript
+                const speaker = event.data.role === 'user' ? 'You' : 'Character';
+                const text = event.data.text || event.data.message;
+                if (text) {
+                    window.audioVR.addToTranscript(speaker, text);
+                }
+            }
+        }
+    });
+    
+    // Configure ElevenLabs widget when it loads
+    const checkWidget = setInterval(() => {
+        const widget = document.querySelector('elevenlabs-convai');
+        if (widget) {
+            clearInterval(checkWidget);
+            
+            // Set initial configuration
+            if (widget.setAttribute) {
+                widget.setAttribute('theme', 'dark');
+                widget.setAttribute('allow-microphone', 'true');
+                widget.setAttribute('language', 'en');
+            }
+        }
+    }, 100);
 });

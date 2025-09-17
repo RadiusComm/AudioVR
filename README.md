@@ -74,6 +74,13 @@
 - Smooth animations and transitions
 - Dark theme optimized for immersion
 
+### 9. **ElevenLabs Conversational AI Integration**
+- Widget embedded with agent ID: `agent_2901k5ce2hyrendtmhzd8r2ayyk5`
+- Context-aware visibility (hidden on world selection, visible in cases)
+- Message event listeners for transcript synchronization
+- Custom styling for dark theme consistency
+- Ready for voice interactions
+
 ## 📊 Data Architecture
 
 ### Data Models:
@@ -122,10 +129,11 @@
 
 ## 🚧 Features Not Yet Implemented
 
-1. **ElevenLabs Integration**
-   - Widget agent configuration needed
-   - Voice ID mapping for characters
-   - Real-time speech-to-text processing
+1. **~~ElevenLabs Integration~~** ✅ **COMPLETED**
+   - Widget integrated with agent ID: `agent_2901k5ce2hyrendtmhzd8r2ayyk5`
+   - Auto-hide/show based on scene context
+   - Message event listeners configured
+   - Transcript synchronization ready
 
 2. **Content Creation**
    - Full case scripts with branching logic
@@ -146,10 +154,10 @@
 ## 🔮 Recommended Next Steps
 
 ### Immediate Priority:
-1. **Configure ElevenLabs Widget**
-   - Create agent on ElevenLabs platform
-   - Add agent ID to application
-   - Configure character voices
+1. **~~Configure ElevenLabs Widget~~** ✅ **COMPLETED**
+   - Agent integrated: `agent_2901k5ce2hyrendtmhzd8r2ayyk5`
+   - Widget embedded and styled
+   - Event listeners configured
 
 2. **Create Sample Content**
    - Write 2-3 complete cases per world
@@ -187,11 +195,16 @@
 
 ### Environment Variables Needed:
 ```env
-ELEVENLABS_API_KEY=your_api_key
-ELEVENLABS_AGENT_ID=your_agent_id
+# ElevenLabs widget is configured directly in HTML with agent ID
+# No API key needed for embedded widget
 SUPABASE_URL=your_supabase_url (optional)
 SUPABASE_ANON_KEY=your_supabase_key (optional)
 ```
+
+### ElevenLabs Widget Configuration:
+- **Agent ID**: `agent_2901k5ce2hyrendtmhzd8r2ayyk5` (embedded in HTML)
+- **Widget Source**: `https://unpkg.com/@elevenlabs/convai-widget-embed`
+- **Integration**: Automatic with message event listeners
 
 ### Deployment Commands:
 ```bash

@@ -389,16 +389,34 @@ app.get('/', (c) => {
                 0%, 100% { box-shadow: 0 0 20px currentColor; }
                 50% { box-shadow: 0 0 40px currentColor, 0 0 60px currentColor; }
             }
+            
+            /* ElevenLabs Widget Custom Styling */
+            elevenlabs-convai {
+                width: 100%;
+                height: 400px;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            
+            /* Hide widget in world selection */
+            body.world-selection elevenlabs-convai {
+                display: none;
+            }
+            
+            /* Show widget in case scenes */
+            body.case-scene elevenlabs-convai {
+                display: block;
+            }
         </style>
     </head>
     <body class="bg-gray-900 text-white min-h-screen">
         <div id="app"></div>
         
         <!-- ElevenLabs Conversational AI Widget -->
-        <elevenlabs-convai agent-id="YOUR_AGENT_ID"></elevenlabs-convai>
+        <elevenlabs-convai agent-id="agent_2901k5ce2hyrendtmhzd8r2ayyk5"></elevenlabs-convai>
         
         <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
-        <script src="https://elevenlabs.io/convai-widget/index.js"></script>
+        <script src="https://unpkg.com/@elevenlabs/convai-widget-embed" async type="text/javascript"></script>
         <script src="/static/app.js"></script>
     </body>
     </html>
