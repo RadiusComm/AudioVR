@@ -11,6 +11,26 @@
 - **Production**: *To be deployed to audiovr.pages.dev*
 - **GitHub**: *To be configured*
 
+## 📊 Current Case Content
+
+### Horror World (8 Cases Available):
+1. **The Count's Last Supper** - Stop a vampire's resurrection (45-60 min)
+2. **The Maker's Folly** - Track down a rogue creation (45-60 min)
+3. **Ashes of the Witch** - Identify and exorcise a demon (45 min)
+4. **Greyfriars Howl** - Rescue a girl from a haunted tomb (30-45 min)
+5. **Bayou Saint-Benoît** - Break a voodoo curse (30 min)
+6. **The Paper Lantern Murders** - Stop an Onryo's vengeance (45-60 min)
+7. **The Haunted Mansion** - Investigate paranormal activity
+8. **Whispers in the Dark** - Solve disappearances near cemetery
+
+### Other Worlds (Demo Cases):
+- **Detective**: 2 cases (The Missing Diamond, Murder at Midnight)
+- **Sci-Fi**: 2 cases (Station Alpha Emergency, The Android Uprising)
+- **Fantasy**: 2 cases (The Dragon's Riddle, The Cursed Kingdom)
+- **Space**: 2 cases (First Contact Protocol, Mars Colony Crisis)
+- **Historical**: 2 cases (Cleopatra's Secret, The Lost Expedition)
+- **Pirate**: 2 cases (Blackbeard's Map, Mutiny on the Serpent)
+
 ## ✅ Currently Completed Features
 
 ### 1. **World Selection System**
@@ -137,10 +157,23 @@
    - Message event listeners configured
    - Transcript synchronization ready
 
-2. **Content Creation**
-   - Full case scripts with branching logic
-   - Character personalities and memories
-   - Voice recordings for NPCs
+2. **~~Content Creation~~** ✅ **HORROR CASES COMPLETED**
+   - **8 Horror Cases Added:**
+     - The Count's Last Supper (Vampire)
+     - The Maker's Folly (Frankenstein)
+     - Ashes of the Witch (Possession)
+     - Greyfriars Howl (Ghost)
+     - Bayou Saint-Benoît (Voodoo)
+     - The Paper Lantern Murders (Onryo)
+     - The Haunted Mansion (Paranormal)
+     - Whispers in the Dark (Mystery)
+   - Each case includes:
+     - Initial dialogue prompts
+     - System instructions for AI
+     - Evidence clues and suspects
+     - Multiple narrative branches
+   - Character voices configured
+   - 18 clues with transcripts
 
 3. **Advanced Features**
    - Territory unlocking system
