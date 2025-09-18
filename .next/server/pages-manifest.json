@@ -1,1 +1,7 @@
-{}
+{
+  "/_error": "pages/_error.js",
+  "/_app": "pages/_app.js",
+  "/api/analytics/dashboard": "pages/api/analytics/dashboard.js",
+  "/api/mysteries/[id]": "pages/api/mysteries/[id].js",
+  "/_document": "pages/_document.js"
+}
