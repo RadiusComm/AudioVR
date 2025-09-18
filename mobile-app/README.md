@@ -1,275 +1,275 @@
 # AudioVR Mobile App
 
-## Project Overview
-- **Name**: AudioVR - Voice-Driven Detective Mystery Mobile App  
-- **Goal**: Create an immersive, accessibility-first detective mystery game using spatial audio, voice commands, and React Native
-- **Target Audience**: Visual impairments, commuters, audio enthusiasts, gamers seeking unique experiences
+A voice-driven detective mystery platform designed with accessibility-first principles, featuring immersive spatial audio and hands-free navigation.
 
-## ✨ Features
+## 🎯 Features
 
-### 🎮 **Core Gameplay**
-- **Immersive Detective Mysteries** - Solve cases through audio-only gameplay in Victorian London, Modern Tokyo, and Space Station Omega
-- **Voice-First Navigation** - Complete game control via voice commands with 95%+ accuracy
-- **Spatial 3D Audio** - HRTF-processed positional audio creates realistic environments
-- **Character Conversations** - Interactive dialogue with AI-powered character responses
-- **Evidence Investigation** - Audio-based clue discovery and deduction mechanics
+### 🎮 Core Gameplay
+- **Voice-Controlled Navigation**: Complete hands-free control using natural language
+- **Detective Mystery Cases**: Immersive stories across multiple worlds (Victorian London, Modern Tokyo, Space Station)
+- **Character Conversations**: AI-powered dialogue with ElevenLabs integration
+- **Evidence Management**: Voice-activated inventory and investigation tools
+- **Progress Tracking**: Chapter-based progression with achievements
 
-### ♿ **Accessibility Excellence**
-- **100% Screen Reader Compatible** - Full VoiceOver/TalkBack support
-- **Voice Navigation** - Hands-free operation for all game functions
-- **High Contrast Mode** - Enhanced visual accessibility
-- **Haptic Feedback** - Tactile cues for important game events
-- **Adjustable Audio Layers** - Independent volume control for dialogue, effects, ambient, and music
-- **Closed Captions** - Text alternatives for all audio content
+### 🔊 Audio Excellence
+- **Spatial Audio**: 3D positioned sound effects for immersive environments
+- **Multi-Layer Audio**: Separate control for ambient, dialogue, music, and UI sounds
+- **Adaptive Streaming**: Smart caching and preloading for smooth playback
+- **Voice Synthesis**: High-quality text-to-speech for character responses
 
-### 🎵 **Advanced Audio System**
-- **Multi-Layer Audio Mixing** - Ambient, effects, dialogue, music, and UI layers
-- **Adaptive Audio Quality** - Dynamic bitrate based on connection (64kbps-320kbps)
-- **Offline Essential Audio** - Core sounds available without internet
-- **Real-time Audio Processing** - <100ms latency for interactive sound effects
-- **Environmental Audio** - Location-specific reverb and acoustic modeling
+### ♿ Accessibility First
+- **Screen Reader Optimization**: Full VoiceOver/TalkBack support
+- **Voice Navigation**: 100% hands-free operation capability
+- **High Contrast Mode**: Enhanced visibility options
+- **Haptic Feedback**: Tactile responses for important interactions
+- **Customizable Controls**: Adjustable voice sensitivity and audio levels
 
-## 📱 **Screens & Navigation**
+## 🏗️ Technical Architecture
 
-### **1. World Selection Screen**
-- **Purpose**: Choose mystery world (Victorian London, Modern Tokyo, Space Station)
-- **Features**: 
-  - Grid layout with atmospheric previews
-  - Difficulty ratings and case counts
-  - Voice commands: "Select [World Name]", "Preview World"
-  - Accessibility-optimized card design
+### 📱 Platform
+- **Framework**: React Native with Expo SDK 49
+- **Navigation**: React Navigation v6 with stack-based routing
+- **State Management**: React hooks with context providers
+- **Audio Engine**: Expo AV with custom spatial audio processing
+- **Voice Recognition**: React Native Voice with custom NLP processing
 
-### **2. Case Detail Screen** 
-- **Purpose**: View case information and continue investigation
-- **Features**:
-  - Case title, difficulty, duration, progress tracking
-  - Character profiles with voice actor credits  
-  - Evidence summary and chapter indicators
-  - Voice commands: "Play", "Review case notes"
-  - Large touch targets and high contrast design
-
-### **3. Active Investigation Screen**
-- **Purpose**: Main gameplay interface for mystery solving
-- **Features**:
-  - Real-time conversation with characters
-  - Audio waveform visualization during dialogue
-  - Voice input with microphone controls
-  - Evidence inventory sidebar
-  - Current objective display
-  - Spatial audio positioning indicators
-
-## 🏗️ **Technical Architecture**
-
-### **Frontend - React Native**
+### 🎵 Audio System
 ```typescript
-// Tech Stack
-- React Native 0.73.2
-- TypeScript for type safety
-- React Navigation for screen management  
-- React Native Reanimated for smooth animations
-- Vector Icons for accessibility-friendly iconography
-```
-
-### **Voice Recognition System**
-```typescript
-// Voice Command Categories
-- Navigation: "go to [location]", "move [direction]"
-- Investigation: "examine [object]", "search [area]" 
-- Conversation: "ask [character] about [topic]"
-- System: "repeat", "pause", "help", "describe scene"
-- Accessibility: "increase dialogue volume", "enable captions"
-```
-
-### **Audio Architecture**
-```typescript
-// Audio Layers (Priority-based mixing)
-1. Ambient (0.4 volume) - Environmental atmosphere
-2. Effects (0.7 volume) - Interactive sound effects  
-3. Dialogue (0.9 volume) - Character speech & narration
-4. Music (0.5 volume) - Background scoring
-5. UI (0.8 volume) - Interface feedback sounds
-```
-
-### **Spatial Audio Engine**
-```typescript
-// 3D Audio Implementation
-- Web Audio API with HRTF processing
-- Distance-based attenuation (exponential rolloff)
-- Environmental reverb modeling
-- Occlusion and directional audio
-- Real-time listener position updates
-```
-
-## 🔧 **Services & APIs**
-
-### **VoiceService.ts** 
-- Speech recognition with context awareness
-- Natural language processing for command extraction
-- Confidence scoring and clarification handling
-- Multi-language support with accent tolerance
-- Offline command recognition for core navigation
-
-### **AudioService.ts**
-- TrackPlayer integration for background audio
-- Sound library for immediate effect playback  
-- Spatial audio positioning with Web Audio API
-- Layer-based volume mixing and ducking
-- CDN streaming with adaptive quality
-
-### **Backend Integration**
-- **Cloudflare Workers + Hono** for API endpoints
-- **ElevenLabs Conversational AI** for character interactions
-- **Cloudflare D1** for user progress and case data
-- **Cloudflare R2** for audio asset storage and streaming
-
-## 📊 **Data Models**
-
-### **GameWorld**
-```typescript
-interface GameWorld {
-  id: string;              // "victorian-london"
-  name: string;            // "Victorian London"  
-  difficulty: number;      // 1-5 stars
-  estimatedDuration: number; // minutes
-  availableCases: number;
-  backgroundImage: string;
-  ambientSound: string;
-  isUnlocked: boolean;
+// Multi-layer audio architecture
+AudioLayers {
+  ambient: 0.6,    // Environmental sounds
+  dialogue: 1.0,   // Character speech
+  sfx: 0.8,        // Sound effects  
+  music: 0.4,      // Background music
+  ui: 0.7          // Interface sounds
 }
 ```
 
-### **DetectiveCase**  
-```typescript
-interface DetectiveCase {
-  id: string;              // "whitechapel-mystery"
-  title: string;           // "The Whitechapel Mystery"
-  currentChapter: number;  // 2
-  totalChapters: number;   // 5  
-  characters: Character[];
-  evidence: Evidence[];
-  progress: number;        // 0-100%
-  backgroundImage: string;
-}
-```
+### 🎤 Voice Commands
+- **Navigation**: "Go to dining car", "Move forward", "Enter room"
+- **Investigation**: "Examine window", "Look at evidence", "Search area"
+- **Conversation**: "Ask Holmes about clues", "Question witness"
+- **System**: "Repeat", "Pause", "Help", "Describe scene"
+- **Accessibility**: "Increase dialogue volume", "Enable descriptions"
 
-### **GameState**
-```typescript  
-interface GameState {
-  currentWorld?: string;        // "victorian-london"
-  currentCase?: string;         // "whitechapel-mystery"
-  currentLocation?: string;     // "Baker Street - Holmes' Study"
-  activeCharacters: string[];   // ["inspector-watson"] 
-  availableEvidence: string[];  // ["bloody-knife", "mysterious-letter"]
-  gamePhase: 'menu' | 'exploration' | 'conversation' | 'deduction';
-  playerProgress: number;       // 40%
-}
-```
+## 🚀 Getting Started
 
-## 🚀 **Setup & Development**
+### Prerequisites
+- Node.js 16+ and npm/yarn
+- Expo CLI: `npm install -g @expo/cli`
+- iOS Simulator (Mac) or Android Emulator
+- Physical device for voice testing (recommended)
 
-### **Prerequisites**
+### Installation
 ```bash
-- Node.js 18+
-- React Native CLI
-- Android Studio (Android development)
-- Xcode 14+ (iOS development)  
-- CocoaPods (iOS dependencies)
-```
-
-### **Installation**
-```bash
-# Clone repository
-git clone https://github.com/audiovr/mobile-app
+# Clone the repository
+git clone https://github.com/username/audiovr-mobile
 cd audiovr-mobile
 
-# Install dependencies  
+# Install dependencies
 npm install
 
-# iOS setup
-cd ios && pod install && cd ..
-
-# Android setup (ensure Android SDK is installed)
-```
-
-### **Running the App**
-```bash
-# Start Metro bundler
+# Start development server
 npm start
 
-# Run on Android
-npm run android
-
-# Run on iOS  
-npm run ios
-
-# Build release APK
-npm run build:android
-
-# Build iOS archive
-npm run build:ios
+# Run on specific platform
+npm run ios     # iOS Simulator
+npm run android # Android Emulator
+npm run web     # Web browser
 ```
 
-## ♿ **Accessibility Features**
+### Platform-Specific Setup
 
-### **Screen Reader Support**
-- Full VoiceOver (iOS) and TalkBack (Android) compatibility
-- Descriptive accessibility labels for all interactive elements
-- Logical focus order and navigation
-- Screen reader announcements for game state changes
+#### iOS Setup
+```bash
+# Install iOS dependencies
+cd ios && pod install && cd ..
 
-### **Voice Navigation** 
-- Complete hands-free operation via voice commands
-- Context-aware command recognition (95%+ accuracy)
-- Clarification dialogues for ambiguous commands
-- Emergency voice commands ("pause", "help", "describe scene")
+# Configure microphone permissions
+# Add to Info.plist:
+# - NSMicrophoneUsageDescription
+# - NSSpeechRecognitionUsageDescription
+```
 
-### **Visual Accessibility**
-- High contrast mode with 4.5:1 minimum contrast ratios
-- Large text mode support (up to 200% scaling)
-- Reduced motion options for users sensitive to animations
-- Color-blind friendly design with non-color-dependent information
+#### Android Setup
+```bash
+# Enable microphone permissions in android/app/src/main/AndroidManifest.xml:
+# - android.permission.RECORD_AUDIO
+# - android.permission.INTERNET
+# - android.permission.ACCESS_NETWORK_STATE
+```
 
-### **Audio Accessibility**
-- Independent volume controls for each audio layer
-- Closed caption support for all spoken content  
-- Audio descriptions for visual elements
-- Spatial audio cues for navigation assistance
+## 📂 Project Structure
 
-## 📋 **Current Status**
+```
+mobile-app/
+├── components/          # Reusable UI components
+│   ├── DesignSystem.tsx # Design tokens and styles
+│   └── ...
+├── screens/            # Main app screens
+│   ├── WorldSelectionScreen.tsx
+│   ├── CaseDetailScreen.tsx
+│   ├── ActiveInvestigationScreen.tsx
+│   └── ...
+├── services/           # Core business logic
+│   ├── VoiceService.ts        # Voice recognition & NLP
+│   ├── AudioAssetManager.ts   # Audio streaming & caching
+│   └── ...
+├── types/              # TypeScript definitions
+│   └── index.ts
+├── utils/              # Helper functions
+├── assets/             # Images, fonts, audio files
+├── App.tsx            # Main app component
+└── package.json       # Dependencies and scripts
+```
 
-### **✅ Completed Components**
-- **UI Design System** - Complete design language with Whitechapel Mystery styling
-- **Screen Components** - World Selection, Case Detail, Active Investigation screens
-- **Voice Command Architecture** - Comprehensive voice recognition and NLP system  
-- **Audio Service** - Multi-layer audio management with spatial positioning
-- **App Foundation** - Navigation, state management, and service integration
+## 🎨 Design System
 
-### **🔄 In Progress**  
-- **Accessibility Testing Framework** - Automated and manual testing procedures
-- **Performance Optimization** - Battery usage and memory management
-- **Content Integration** - Sample mystery cases and character data
+### Color Palette
+```typescript
+Colors {
+  background: '#1a1a2e',      // Dark navy background
+  purple: {
+    primary: '#6c5ce7',       // Main purple accent
+    light: '#a29bfe',         // Light purple highlights
+    dark: '#5f3dc4',          // Dark purple depth
+  },
+  text: {
+    primary: '#ffffff',       // White primary text
+    secondary: '#b2bec3',     // Light gray secondary
+    tertiary: '#636e72',      // Medium gray tertiary
+  }
+}
+```
 
-### **📅 Next Steps**
-1. **Complete accessibility testing framework and validation procedures**
-2. **Implement content creation tools for mystery writers and game designers**  
-3. **Beta testing with accessibility community and target users**
-4. **Performance optimization and battery life improvements**
-5. **App store submission and launch preparation**
+### Typography
+- **Headings**: Bold, high contrast for accessibility
+- **Body Text**: Optimized line height and spacing
+- **Voice Commands**: Clear, descriptive labels
 
-## 🔗 **Related Documentation**
+## 🧪 Testing
 
-- **[AudioVR Build Instructions](../AUDIOVR_BUILD_INSTRUCTIONS.md)** - Complete technical implementation guide
-- **[Voice Command Architecture](../VOICE_COMMAND_ARCHITECTURE.md)** - Detailed voice system specification  
-- **[Audio Asset Management](../AUDIO_ASSET_MANAGEMENT.md)** - Audio streaming and spatial positioning
-- **[Accessibility Testing Framework](../ACCESSIBILITY_TESTING_FRAMEWORK.md)** - Testing procedures and validation
+### Voice Recognition Testing
+```bash
+# Test voice commands in development
+npm test
 
-## 📄 **License & Contact**
+# Test with different accents and languages
+# Use physical device for accurate microphone testing
+```
 
-- **Platform**: React Native (iOS/Android)
-- **Status**: ✅ Development Complete - Ready for Testing
-- **Tech Stack**: React Native + TypeScript + Cloudflare Workers + ElevenLabs AI
-- **Last Updated**: September 2024
+### Accessibility Testing
+- **Screen Reader**: Test with VoiceOver (iOS) and TalkBack (Android)
+- **Voice Navigation**: Ensure complete hands-free operation
+- **Contrast**: Verify color contrast ratios meet WCAG guidelines
+- **Motor Accessibility**: Test with voice-only interaction
+
+## 🏗️ Build & Deployment
+
+### Development Build
+```bash
+# Create development build
+eas build --profile development --platform ios
+eas build --profile development --platform android
+```
+
+### Production Build
+```bash
+# Create production builds
+eas build --profile production --platform all
+
+# Submit to app stores
+eas submit --platform ios
+eas submit --platform android
+```
+
+### Environment Configuration
+```bash
+# Set up environment variables
+cp .env.example .env
+
+# Configure ElevenLabs API key
+ELEVENLABS_API_KEY=your_api_key_here
+
+# Configure Cloudflare backend URL
+BACKEND_URL=https://your-backend.pages.dev
+```
+
+## 🎵 Audio Asset Management
+
+### Asset Types
+- **Ambient**: Environmental background sounds (rain, city noise, space hum)
+- **Dialogue**: Character speech with spatial positioning
+- **SFX**: Interactive sound effects (footsteps, door creaks, object interactions)
+- **Music**: Adaptive background music based on tension/mood
+- **UI**: Interface feedback sounds (button presses, confirmations)
+
+### Caching Strategy
+- **Preload**: Essential game assets (500MB cache limit)
+- **Streaming**: Dynamic content based on user choices
+- **Compression**: Optimized audio formats for mobile bandwidth
+
+## 🔊 Voice Command System
+
+### Natural Language Processing
+```typescript
+// Command pattern matching
+patterns: {
+  'go to {location}': navigate,
+  'examine {object}': investigate, 
+  'ask {character} about {topic}': question,
+  'use {item} on {target}': interact
+}
+```
+
+### Context Awareness
+- **Game Phase**: Different commands available in menu vs. gameplay
+- **Location**: Environment-specific interaction options
+- **Character Presence**: Conversation commands only when characters present
+- **Inventory**: Item-specific usage commands
+
+## 📊 Performance Optimization
+
+### Audio Performance
+- **Spatial Audio**: Efficient 3D positioning calculations
+- **Memory Management**: Smart loading/unloading of audio assets
+- **Battery Optimization**: Adaptive processing based on device state
+
+### Voice Processing
+- **Local Recognition**: Core commands processed offline
+- **Cloud Fallback**: Advanced NLP via cloud services when available
+- **Latency Reduction**: <500ms response time target
+
+## 🤝 Contributing
+
+### Development Guidelines
+1. **Accessibility First**: Every feature must support voice-only operation
+2. **Performance**: Maintain 60fps and <2s load times
+3. **Testing**: Include voice command tests for all new features
+4. **Documentation**: Update voice command lists and accessibility guides
+
+### Code Style
+- **TypeScript**: Strict mode enabled with comprehensive typing
+- **ESLint**: Expo-recommended configuration with accessibility rules
+- **Prettier**: Consistent code formatting
+- **Commit Messages**: Conventional commits format
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support
+
+### Troubleshooting
+- **Voice Recognition Issues**: Check microphone permissions and background noise
+- **Audio Playback Problems**: Verify device audio settings and restart app
+- **Performance Issues**: Clear app cache and ensure sufficient storage space
+
+### Contact
+- **GitHub Issues**: Report bugs and feature requests
+- **Email Support**: support@audiovr.app
+- **Accessibility Feedback**: accessibility@audiovr.app
 
 ---
 
-**AudioVR** - Revolutionizing detective mysteries through immersive audio and accessibility-first design. Perfect for commuters, audio enthusiasts, and users with visual impairments seeking rich, interactive storytelling experiences.
+*AudioVR - Making detective mysteries accessible to everyone through the power of voice and spatial audio.*

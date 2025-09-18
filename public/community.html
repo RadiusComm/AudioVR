@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR Community Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+        }
+        
+        .community-card {
+            transition: all 0.3s ease;
+        }
+        
+        .community-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .nav-tab {
+            padding: 12px 24px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .nav-tab:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-tab.active {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+        
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        .badge-accessibility { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+        .badge-reviewer { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-creator { background: rgba(139, 92, 246, 0.2); color: #8b5cf6; }
+        .badge-helper { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        
+        .post-type-discussion { border-left: 4px solid #3b82f6; }
+        .post-type-review { border-left: 4px solid #10b981; }
+        .post-type-tip { border-left: 4px solid #f59e0b; }
+        .post-type-accessibility_feedback { border-left: 4px solid #8b5cf6; }
+        
+        .rating-stars {
+            color: #fbbf24;
+        }
+        
+        .accessibility-score-excellent { color: #10b981; }
+        .accessibility-score-good { color: #f59e0b; }
+        .accessibility-score-needs-work { color: #ef4444; }
+        
+        .content-section {
+            display: none;
+        }
+        
+        .content-section.active {
+            display: block;
+        }
+        
+        .leaderboard-position {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .position-1 { background: linear-gradient(135deg, #ffd700, #ffed4e); color: #1f2937; }
+        .position-2 { background: linear-gradient(135deg, #c0c0c0, #e5e7eb); color: #1f2937; }
+        .position-3 { background: linear-gradient(135deg, #cd7f32, #d97706); color: white; }
+        .position-other { background: rgba(75, 85, 99, 0.5); color: #d1d5db; }
+        
+        .challenge-progress {
+            background: rgba(75, 85, 99, 0.3);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .challenge-progress-fill {
+            background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Header -->
+    <header class="bg-black/20 backdrop-blur-md border-b border-white/10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-white"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">AudioVR Community</h1>
+                        <p class="text-sm text-gray-300">Connect, Share, Learn</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button onclick="showCreatePostModal()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg font-medium transition-all">
+                        <i class="fas fa-plus mr-2"></i>New Post
+                    </button>
+                    
+                    <div class="flex items-center space-x-2 bg-black/20 rounded-lg px-3 py-2">
+                        <div class="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white text-sm"></i>
+                        </div>
+                        <div class="text-sm">
+                            <p class="font-medium">Alex Chen</p>
+                            <p class="text-gray-400">Accessibility Advocate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Navigation Tabs -->
+        <div class="flex space-x-1 bg-black/20 rounded-lg p-1 mb-8 overflow-x-auto">
+            <div class="nav-tab active" onclick="showSection('feed')">
+                <i class="fas fa-stream mr-2"></i>Community Feed
+            </div>
+            <div class="nav-tab" onclick="showSection('accessibility')">
+                <i class="fas fa-universal-access mr-2"></i>Accessibility Hub
+            </div>
+            <div class="nav-tab" onclick="showSection('leaderboard')">
+                <i class="fas fa-trophy mr-2"></i>Leaderboard
+            </div>
+            <div class="nav-tab" onclick="showSection('challenges')">
+                <i class="fas fa-tasks mr-2"></i>Challenges
+            </div>
+            <div class="nav-tab" onclick="showSection('tips')">
+                <i class="fas fa-lightbulb mr-2"></i>Tips & Guides
+            </div>
+        </div>
+
+        <!-- Community Feed Section -->
+        <div id="feed-section" class="content-section active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Main Feed -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-card p-6">
+                        <h2 class="text-xl font-bold mb-4">Community Feed</h2>
+                        
+                        <!-- Feed Filters -->
+                        <div class="flex space-x-4 mb-6">
+                            <button onclick="filterFeed('all')" class="feed-filter active px-4 py-2 rounded-lg bg-purple-600 text-white">
+                                All Posts
+                            </button>
+                            <button onclick="filterFeed('accessibility')" class="feed-filter px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500">
+                                Accessibility
+                            </button>
+                            <button onclick="filterFeed('reviews')" class="feed-filter px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500">
+                                Reviews
+                            </button>
+                            <button onclick="filterFeed('discussions')" class="feed-filter px-4 py-2 rounded-lg bg-gray-600 hover:bg-gray-500">
+                                Discussions
+                            </button>
+                        </div>
+                        
+                        <!-- Posts -->
+                        <div id="posts-container" class="space-y-6">
+                            <!-- Sample Post 1: Accessibility Feedback -->
+                            <div class="post-type-accessibility_feedback community-card glass-card p-6">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h3 class="font-semibold">Sarah Mitchell</h3>
+                                            <span class="badge badge-accessibility">
+                                                <i class="fas fa-universal-access mr-1"></i>Accessibility Advocate
+                                            </span>
+                                            <span class="text-gray-400 text-sm">2 hours ago</span>
+                                        </div>
+                                        
+                                        <h4 class="font-semibold mb-3 text-purple-300">Accessibility Feedback: The Clockmaker's Curse</h4>
+                                        
+                                        <p class="text-gray-300 mb-4">
+                                            Just completed "The Clockmaker's Curse" using VoiceOver and wanted to share my experience. 
+                                            The spatial audio positioning was incredible - I could navigate entirely by sound! 
+                                            The character voice synthesis was clear and distinct for each persona.
+                                        </p>
+                                        
+                                        <div class="bg-green-500/10 border border-green-500/20 rounded-lg p-4 mb-4">
+                                            <h5 class="font-medium text-green-300 mb-2">Accessibility Highlights:</h5>
+                                            <ul class="text-sm text-gray-300 space-y-1">
+                                                <li>• Excellent screen reader compatibility</li>
+                                                <li>• Clear audio descriptions for all visual elements</li>
+                                                <li>• Consistent voice command recognition</li>
+                                                <li>• Helpful spatial audio cues for navigation</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4 mb-4">
+                                            <h5 class="font-medium text-yellow-300 mb-2">Suggestions for Improvement:</h5>
+                                            <ul class="text-sm text-gray-300 space-y-1">
+                                                <li>• Add option to adjust spatial audio intensity</li>
+                                                <li>• Include more audio cues for interactive elements</li>
+                                                <li>• Consider adding haptic feedback for key moments</li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-4">
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-purple-400">
+                                                    <i class="fas fa-thumbs-up"></i>
+                                                    <span>28</span>
+                                                </button>
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-blue-400">
+                                                    <i class="fas fa-comment"></i>
+                                                    <span>12</span>
+                                                </button>
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-green-400">
+                                                    <i class="fas fa-share"></i>
+                                                    <span>Share</span>
+                                                </button>
+                                            </div>
+                                            
+                                            <div class="flex items-center space-x-2">
+                                                <span class="text-sm text-gray-400">Accessibility Score:</span>
+                                                <span class="accessibility-score-excellent font-semibold">9.2/10</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sample Post 2: Mystery Review -->
+                            <div class="post-type-review community-card glass-card p-6">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h3 class="font-semibold">Marcus Rodriguez</h3>
+                                            <span class="badge badge-reviewer">
+                                                <i class="fas fa-star mr-1"></i>Trusted Reviewer
+                                            </span>
+                                            <span class="text-gray-400 text-sm">5 hours ago</span>
+                                        </div>
+                                        
+                                        <div class="flex items-center space-x-2 mb-3">
+                                            <h4 class="font-semibold text-blue-300">Review: Neon Nights Murder</h4>
+                                            <div class="rating-stars">
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="fas fa-star"></i>
+                                                <i class="far fa-star"></i>
+                                            </div>
+                                            <span class="text-gray-400">(4.5/5)</span>
+                                        </div>
+                                        
+                                        <p class="text-gray-300 mb-4">
+                                            "Neon Nights Murder" delivers an outstanding cyberpunk detective experience. 
+                                            The voice acting is top-notch, and the futuristic soundscape really immerses you 
+                                            in Neo-Tokyo 2085. The mystery keeps you guessing until the very end.
+                                        </p>
+                                        
+                                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4 text-sm">
+                                            <div class="text-center">
+                                                <p class="text-gray-400">Story</p>
+                                                <p class="font-semibold">4.8/5</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-gray-400">Audio Quality</p>
+                                                <p class="font-semibold">4.9/5</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-gray-400">Voice Commands</p>
+                                                <p class="font-semibold">4.2/5</p>
+                                            </div>
+                                            <div class="text-center">
+                                                <p class="text-gray-400">Accessibility</p>
+                                                <p class="accessibility-score-excellent font-semibold">4.7/5</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-4">
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-purple-400">
+                                                    <i class="fas fa-thumbs-up"></i>
+                                                    <span>42</span>
+                                                </button>
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-blue-400">
+                                                    <i class="fas fa-comment"></i>
+                                                    <span>18</span>
+                                                </button>
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-green-400">
+                                                    <i class="fas fa-bookmark"></i>
+                                                    <span>Save</span>
+                                                </button>
+                                            </div>
+                                            
+                                            <span class="text-sm text-gray-400">Recommended for: Cyberpunk fans, Voice gaming enthusiasts</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Sample Post 3: Discussion -->
+                            <div class="post-type-discussion community-card glass-card p-6">
+                                <div class="flex items-start space-x-4">
+                                    <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fas fa-user text-white"></i>
+                                    </div>
+                                    
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <h3 class="font-semibold">Elena Vasquez</h3>
+                                            <span class="badge badge-helper">
+                                                <i class="fas fa-hands-helping mr-1"></i>Community Helper
+                                            </span>
+                                            <span class="text-gray-400 text-sm">1 day ago</span>
+                                        </div>
+                                        
+                                        <h4 class="font-semibold mb-3 text-purple-300">Tips for New Players: Voice Command Best Practices</h4>
+                                        
+                                        <p class="text-gray-300 mb-4">
+                                            Welcome to all the new AudioVR players! Here are some tips I've learned after 
+                                            completing 15+ mysteries that will help improve your voice command accuracy:
+                                        </p>
+                                        
+                                        <div class="bg-purple-500/10 border border-purple-500/20 rounded-lg p-4 mb-4">
+                                            <ol class="text-sm text-gray-300 space-y-2">
+                                                <li>1. <strong>Speak clearly and at a consistent pace</strong> - The system adapts to your natural speech rhythm</li>
+                                                <li>2. <strong>Use the microphone 6-8 inches from your mouth</strong> - Too close causes audio distortion</li>
+                                                <li>3. <strong>Practice in a quiet environment first</strong> - Build confidence before trying noisy spaces</li>
+                                                <li>4. <strong>Learn command variations</strong> - "Examine knife" and "Look at blade" both work</li>
+                                                <li>5. <strong>Complete the voice training</strong> - It really does improve recognition accuracy</li>
+                                            </ol>
+                                        </div>
+                                        
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex items-center space-x-4">
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-purple-400">
+                                                    <i class="fas fa-thumbs-up"></i>
+                                                    <span>156</span>
+                                                </button>
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-blue-400">
+                                                    <i class="fas fa-comment"></i>
+                                                    <span>34</span>
+                                                </button>
+                                                <button class="flex items-center space-x-2 text-gray-400 hover:text-yellow-400">
+                                                    <i class="fas fa-award"></i>
+                                                    <span>Helpful</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Load More Button -->
+                        <div class="text-center mt-8">
+                            <button onclick="loadMorePosts()" class="bg-gray-700 hover:bg-gray-600 px-6 py-3 rounded-lg transition-all">
+                                Load More Posts
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="space-y-6">
+                    <!-- Quick Stats -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Community Stats</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Active Members</span>
+                                <span class="font-semibold text-purple-400">12,847</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Posts This Week</span>
+                                <span class="font-semibold text-blue-400">486</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Accessibility Reviews</span>
+                                <span class="font-semibold text-green-400">1,293</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Mystery Completions</span>
+                                <span class="font-semibold text-yellow-400">8,652</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Trending Topics -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Trending Topics</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-fire text-orange-400"></i>
+                                <span class="text-gray-300">#VoiceCommandTips</span>
+                                <span class="text-xs bg-gray-600 px-2 py-1 rounded">124 posts</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-fire text-orange-400"></i>
+                                <span class="text-gray-300">#AccessibilityWins</span>
+                                <span class="text-xs bg-gray-600 px-2 py-1 rounded">89 posts</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-fire text-orange-400"></i>
+                                <span class="text-gray-300">#SpaceStationOmega</span>
+                                <span class="text-xs bg-gray-600 px-2 py-1 rounded">76 posts</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-fire text-orange-400"></i>
+                                <span class="text-gray-300">#ScreenReaderTips</span>
+                                <span class="text-xs bg-gray-600 px-2 py-1 rounded">65 posts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Achievements -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Recent Achievements</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-trophy text-white text-xs"></i>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-white font-medium">Mystery Master</p>
+                                    <p class="text-gray-400">Completed 50 mysteries</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-universal-access text-white text-xs"></i>
+                                </div>
+                                <div class="text-sm">
+                                    <p class="text-white font-medium">Accessibility Champion</p>
+                                    <p class="text-gray-400">25 helpful accessibility reviews</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accessibility Hub Section -->
+        <div id="accessibility-section" class="content-section">
+            <div class="glass-card p-8">
+                <h2 class="text-2xl font-bold mb-6 text-center">Accessibility Community Hub</h2>
+                <p class="text-gray-300 text-center mb-8 max-w-3xl mx-auto">
+                    Share experiences, provide feedback, and help make AudioVR more accessible for everyone. 
+                    Your insights help improve the platform for all users.
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                    <div class="glass-card p-6 text-center">
+                        <i class="fas fa-comments text-4xl text-purple-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold mb-2">Share Feedback</h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Share your accessibility experiences and help others navigate AudioVR mysteries.
+                        </p>
+                        <button onclick="showAccessibilityFeedbackModal()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg">
+                            Submit Feedback
+                        </button>
+                    </div>
+                    
+                    <div class="glass-card p-6 text-center">
+                        <i class="fas fa-lightbulb text-4xl text-yellow-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold mb-2">Contribute Tips</h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Share accessibility tips and tricks that have helped you enjoy the games more.
+                        </p>
+                        <button onclick="showTipsModal()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded-lg">
+                            Share Tips
+                        </button>
+                    </div>
+                    
+                    <div class="glass-card p-6 text-center">
+                        <i class="fas fa-users text-4xl text-green-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold mb-2">Help Others</h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Answer questions and support fellow community members with accessibility needs.
+                        </p>
+                        <button onclick="showSection('feed')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg">
+                            Join Discussions
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Accessibility Feedback -->
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-semibold mb-6">Recent Accessibility Feedback</h3>
+                    <p class="text-gray-300 mb-6">See what the community is saying about accessibility features across different mysteries.</p>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-gray-800/50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold">The Clockmaker's Curse</h4>
+                                <div class="accessibility-score-excellent font-semibold">9.2/10</div>
+                            </div>
+                            <p class="text-sm text-gray-300 mb-3">
+                                "Excellent spatial audio and VoiceOver compatibility. Clear audio descriptions helped me navigate complex Victorian-era scenes."
+                            </p>
+                            <div class="flex items-center space-x-4 text-xs text-gray-400">
+                                <span>12 helpful votes</span>
+                                <span>VoiceOver, Voice Commands</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-800/50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-semibold">Space Station Omega</h4>
+                                <div class="accessibility-score-good font-semibold">8.7/10</div>
+                            </div>
+                            <p class="text-sm text-gray-300 mb-3">
+                                "Great use of 3D audio for zero-gravity navigation. Haptic feedback during key discoveries was very helpful."
+                            </p>
+                            <div class="flex items-center space-x-4 text-xs text-gray-400">
+                                <span>8 helpful votes</span>
+                                <span>Haptic, Spatial Audio</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Leaderboard Section -->
+        <div id="leaderboard-section" class="content-section">
+            <div class="glass-card p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold mb-4">Accessibility Champions</h2>
+                    <p class="text-gray-300">Recognizing community members who help make AudioVR more accessible for everyone</p>
+                </div>
+                
+                <!-- Time Period Filter -->
+                <div class="flex justify-center mb-8">
+                    <div class="flex space-x-1 bg-black/20 rounded-lg p-1">
+                        <button onclick="filterLeaderboard('7d')" class="leaderboard-filter px-4 py-2 rounded bg-purple-600 text-white">
+                            This Week
+                        </button>
+                        <button onclick="filterLeaderboard('30d')" class="leaderboard-filter px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">
+                            This Month
+                        </button>
+                        <button onclick="filterLeaderboard('all')" class="leaderboard-filter px-4 py-2 rounded bg-gray-600 hover:bg-gray-500">
+                            All Time
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Leaderboard -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-4 p-4 glass-card">
+                        <div class="leaderboard-position position-1">1</div>
+                        <div class="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h3 class="font-semibold">Sarah Mitchell</h3>
+                                <span class="badge badge-accessibility">
+                                    <i class="fas fa-universal-access mr-1"></i>Accessibility Champion
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-400">147 accessibility points • 23 helpful reviews</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-yellow-400">147 pts</p>
+                            <p class="text-xs text-gray-400">+12 this week</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 p-4 glass-card">
+                        <div class="leaderboard-position position-2">2</div>
+                        <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h3 class="font-semibold">Marcus Rodriguez</h3>
+                                <span class="badge badge-reviewer">
+                                    <i class="fas fa-star mr-1"></i>Expert Reviewer
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-400">134 accessibility points • 19 helpful reviews</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-gray-300">134 pts</p>
+                            <p class="text-xs text-gray-400">+8 this week</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-4 p-4 glass-card">
+                        <div class="leaderboard-position position-3">3</div>
+                        <div class="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user text-white"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center space-x-2 mb-1">
+                                <h3 class="font-semibold">Elena Vasquez</h3>
+                                <span class="badge badge-helper">
+                                    <i class="fas fa-hands-helping mr-1"></i>Community Helper
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-400">128 accessibility points • 31 helpful posts</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="font-semibold text-orange-400">128 pts</p>
+                            <p class="text-xs text-gray-400">+15 this week</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Challenges Section -->
+        <div id="challenges-section" class="content-section">
+            <div class="glass-card p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold mb-4">Community Challenges</h2>
+                    <p class="text-gray-300">Participate in challenges to earn badges, help the community, and improve accessibility</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Active Challenge 1 -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-universal-access text-2xl text-green-400"></i>
+                                <div>
+                                    <h3 class="font-semibold">Accessibility Feedback Week</h3>
+                                    <p class="text-sm text-gray-400">Ends in 4 days</p>
+                                </div>
+                            </div>
+                            <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-medium">Active</span>
+                        </div>
+                        
+                        <p class="text-gray-300 mb-4">
+                            Help improve AudioVR by submitting detailed accessibility feedback for any 3 mysteries. 
+                            Focus on voice commands, audio descriptions, and navigation.
+                        </p>
+                        
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">Progress</span>
+                                <span class="text-gray-400">847 / 1000 participants</span>
+                            </div>
+                            <div class="challenge-progress h-2">
+                                <div class="challenge-progress-fill" style="width: 84.7%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm">
+                                <p class="text-yellow-400 font-medium">Reward: Accessibility Advocate Badge</p>
+                                <p class="text-gray-400">+ 25 community points</p>
+                            </div>
+                            <button onclick="joinChallenge('accessibility-week')" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg">
+                                Join Challenge
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Active Challenge 2 -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-lightbulb text-2xl text-yellow-400"></i>
+                                <div>
+                                    <h3 class="font-semibold">Voice Command Master</h3>
+                                    <p class="text-sm text-gray-400">Ends in 2 weeks</p>
+                                </div>
+                            </div>
+                            <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-medium">Active</span>
+                        </div>
+                        
+                        <p class="text-gray-300 mb-4">
+                            Share 5 helpful voice command tips or shortcuts with the community. 
+                            Help new players improve their voice recognition accuracy.
+                        </p>
+                        
+                        <div class="mb-4">
+                            <div class="flex justify-between text-sm mb-2">
+                                <span class="text-gray-400">Progress</span>
+                                <span class="text-gray-400">423 / 500 participants</span>
+                            </div>
+                            <div class="challenge-progress h-2">
+                                <div class="challenge-progress-fill" style="width: 84.6%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="text-sm">
+                                <p class="text-yellow-400 font-medium">Reward: Voice Command Expert Badge</p>
+                                <p class="text-gray-400">+ 20 community points</p>
+                            </div>
+                            <button onclick="joinChallenge('voice-master')" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg">
+                                Join Challenge
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips Section -->
+        <div id="tips-section" class="content-section">
+            <div class="glass-card p-8">
+                <div class="text-center mb-8">
+                    <h2 class="text-2xl font-bold mb-4">Tips & Accessibility Guides</h2>
+                    <p class="text-gray-300">Community-contributed tips to help you get the most out of AudioVR</p>
+                </div>
+                
+                <!-- Tips Categories -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="glass-card p-6">
+                        <i class="fas fa-microphone text-3xl text-purple-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold mb-4">Voice Commands</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="bg-purple-500/10 rounded p-3">
+                                <p class="font-medium mb-1">Speak Naturally</p>
+                                <p class="text-gray-300">Use complete sentences like "I want to examine the knife" instead of just "examine knife"</p>
+                            </div>
+                            <div class="bg-purple-500/10 rounded p-3">
+                                <p class="font-medium mb-1">Command Variations</p>
+                                <p class="text-gray-300">Learn multiple ways to say the same thing: "talk to", "speak with", "ask", "question"</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card p-6">
+                        <i class="fas fa-headphones text-3xl text-blue-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold mb-4">Audio Settings</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="bg-blue-500/10 rounded p-3">
+                                <p class="font-medium mb-1">Spatial Audio Setup</p>
+                                <p class="text-gray-300">Use stereo headphones for best spatial positioning. Adjust balance in settings if needed.</p>
+                            </div>
+                            <div class="bg-blue-500/10 rounded p-3">
+                                <p class="font-medium mb-1">Volume Balance</p>
+                                <p class="text-gray-300">Set dialogue 20% louder than effects for clearer character conversations</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="glass-card p-6">
+                        <i class="fas fa-universal-access text-3xl text-green-400 mb-4"></i>
+                        <h3 class="text-lg font-semibold mb-4">Screen Reader</h3>
+                        <div class="space-y-3 text-sm">
+                            <div class="bg-green-500/10 rounded p-3">
+                                <p class="font-medium mb-1">Navigation Mode</p>
+                                <p class="text-gray-300">Use browse mode for scene descriptions, focus mode for interactions</p>
+                            </div>
+                            <div class="bg-green-500/10 rounded p-3">
+                                <p class="font-medium mb-1">Reading Speed</p>
+                                <p class="text-gray-300">Slow down screen reader for detailed evidence descriptions</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Section navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // Remove active class from nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionName + '-section').classList.add('active');
+            
+            // Add active class to clicked tab
+            event.target.classList.add('active');
+        }
+
+        // Feed filtering
+        function filterFeed(type) {
+            console.log('Filtering feed by:', type);
+            
+            // Update filter button states
+            document.querySelectorAll('.feed-filter').forEach(btn => {
+                btn.classList.remove('active', 'bg-purple-600', 'text-white');
+                btn.classList.add('bg-gray-600');
+            });
+            
+            event.target.classList.add('active', 'bg-purple-600', 'text-white');
+            event.target.classList.remove('bg-gray-600');
+            
+            // In a real implementation, this would filter the posts
+            // For now, we'll just log the action
+        }
+
+        // Leaderboard filtering  
+        function filterLeaderboard(timeframe) {
+            console.log('Filtering leaderboard by:', timeframe);
+            
+            // Update filter button states
+            document.querySelectorAll('.leaderboard-filter').forEach(btn => {
+                btn.classList.remove('bg-purple-600', 'text-white');
+                btn.classList.add('bg-gray-600');
+            });
+            
+            event.target.classList.add('bg-purple-600', 'text-white');
+            event.target.classList.remove('bg-gray-600');
+        }
+
+        // Load more posts
+        function loadMorePosts() {
+            console.log('Loading more posts...');
+            // In real implementation, this would make API call to load more posts
+        }
+
+        // Challenge participation
+        function joinChallenge(challengeId) {
+            console.log('Joining challenge:', challengeId);
+            
+            // Update button state
+            event.target.textContent = 'Joined!';
+            event.target.classList.remove('bg-green-600', 'hover:bg-green-700', 'bg-blue-600', 'hover:bg-blue-700');
+            event.target.classList.add('bg-gray-600');
+            event.target.disabled = true;
+            
+            // In real implementation, this would make API call
+        }
+
+        // Modal functions (placeholders)
+        function showCreatePostModal() {
+            console.log('Opening create post modal');
+            alert('Create Post modal would open here');
+        }
+
+        function showAccessibilityFeedbackModal() {
+            console.log('Opening accessibility feedback modal');
+            alert('Accessibility Feedback modal would open here');
+        }
+
+        function showTipsModal() {
+            console.log('Opening tips modal');
+            alert('Share Tips modal would open here');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('AudioVR Community Hub loaded');
+        });
+    </script>
+</body>
+</html>

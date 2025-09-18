@@ -1,9 +1,9 @@
 module.exports = {
   apps: [
     {
-      name: 'audiovr',
-      script: 'npx',
-      args: 'wrangler pages dev dist --d1=audiovr-db --local --ip 0.0.0.0 --port 3000',
+      name: 'audiovr-next',
+      script: 'npm',
+      args: 'run dev',
       env: {
         NODE_ENV: 'development',
         PORT: 3000

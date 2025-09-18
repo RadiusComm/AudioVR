@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .accessibility-card {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+        
+        .engagement-card {
+            background: linear-gradient(135deg, rgba(249, 115, 22, 0.1), rgba(245, 158, 11, 0.05));
+            border: 1px solid rgba(249, 115, 22, 0.2);
+        }
+        
+        .performance-card {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(219, 39, 119, 0.05));
+            border: 1px solid rgba(236, 72, 153, 0.2);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .status-healthy { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-critical { background: #ef4444; }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .mini-chart {
+            height: 120px;
+        }
+        
+        .real-time-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        
+        .accessibility-heatmap {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 4px;
+        }
+        
+        .heatmap-cell {
+            aspect-ratio: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .heatmap-excellent { background: #10b981; color: white; }
+        .heatmap-good { background: #84cc16; color: white; }
+        .heatmap-fair { background: #f59e0b; color: white; }
+        .heatmap-poor { background: #ef4444; color: white; }
+    </style>
+</head>
+<body class="min-h-screen p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-white mb-2">
+                        <i class="fas fa-chart-line mr-3 text-blue-400"></i>
+                        AudioVR Analytics Dashboard
+                    </h1>
+                    <p class="text-gray-300">Real-time insights into user engagement and accessibility performance</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div class="text-sm text-gray-300">
+                        <span class="status-indicator status-healthy real-time-indicator"></span>
+                        Live Data
+                    </div>
+                    <select class="bg-gray-800 text-white px-4 py-2 rounded-lg border border-gray-600">
+                        <option>Last 24 Hours</option>
+                        <option>Last 7 Days</option>
+                        <option>Last 30 Days</option>
+                        <option>Last 90 Days</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Users -->
+            <div class="dashboard-card metric-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-300 text-sm font-medium">Active Users</p>
+                        <p class="text-3xl font-bold text-white">12,847</p>
+                        <div class="flex items-center mt-2">
+                            <i class="fas fa-arrow-up text-green-400 text-xs mr-1"></i>
+                            <span class="text-green-400 text-sm">+15.3%</span>
+                            <span class="text-gray-400 text-sm ml-2">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="text-4xl text-blue-400">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Voice Commands -->
+            <div class="dashboard-card metric-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-300 text-sm font-medium">Voice Commands/Day</p>
+                        <p class="text-3xl font-bold text-white">127K</p>
+                        <div class="flex items-center mt-2">
+                            <i class="fas fa-arrow-up text-green-400 text-xs mr-1"></i>
+                            <span class="text-green-400 text-sm">+8.7%</span>
+                            <span class="text-gray-400 text-sm ml-2">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="text-4xl text-purple-400">
+                        <i class="fas fa-microphone"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accessibility Score -->
+            <div class="dashboard-card accessibility-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-300 text-sm font-medium">Accessibility Score</p>
+                        <p class="text-3xl font-bold text-white">97.2%</p>
+                        <div class="flex items-center mt-2">
+                            <i class="fas fa-check-circle text-green-400 text-xs mr-1"></i>
+                            <span class="text-green-400 text-sm">WCAG 2.1 AA</span>
+                        </div>
+                    </div>
+                    <div class="text-4xl text-green-400">
+                        <i class="fas fa-universal-access"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Completion Rate -->
+            <div class="dashboard-card engagement-card p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-300 text-sm font-medium">Case Completion</p>
+                        <p class="text-3xl font-bold text-white">82.4%</p>
+                        <div class="flex items-center mt-2">
+                            <i class="fas fa-arrow-up text-green-400 text-xs mr-1"></i>
+                            <span class="text-green-400 text-sm">+3.2%</span>
+                            <span class="text-gray-400 text-sm ml-2">vs last week</span>
+                        </div>
+                    </div>
+                    <div class="text-4xl text-orange-400">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- User Engagement Chart -->
+            <div class="dashboard-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-white">Daily Active Users</h3>
+                    <div class="flex space-x-2">
+                        <button class="px-3 py-1 bg-blue-600 text-white text-sm rounded">7D</button>
+                        <button class="px-3 py-1 bg-gray-700 text-gray-300 text-sm rounded">30D</button>
+                        <button class="px-3 py-1 bg-gray-700 text-gray-300 text-sm rounded">90D</button>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="engagementChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Voice Command Accuracy -->
+            <div class="dashboard-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-white">Voice Recognition Accuracy</h3>
+                    <div class="flex items-center">
+                        <span class="status-indicator status-healthy"></span>
+                        <span class="text-green-400 text-sm font-medium">95.7% Avg</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="accuracyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accessibility Detailed Section -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Accessibility Metrics -->
+            <div class="dashboard-card accessibility-card p-6">
+                <h3 class="text-xl font-semibold text-white mb-6">Accessibility Metrics</h3>
+                
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-eye text-blue-400 mr-3"></i>
+                            <span class="text-gray-300">Screen Reader Users</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-semibold">68.3%</div>
+                            <div class="text-xs text-green-400">+5.2%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-microphone text-purple-400 mr-3"></i>
+                            <span class="text-gray-300">Voice-Only Navigation</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-semibold">94.7%</div>
+                            <div class="text-xs text-green-400">+2.1%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-hand-paper text-orange-400 mr-3"></i>
+                            <span class="text-gray-300">Motor Accessibility</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-semibold">98.9%</div>
+                            <div class="text-xs text-green-400">+0.8%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <i class="fas fa-volume-up text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Audio Description</span>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-white font-semibold">99.2%</div>
+                            <div class="text-xs text-green-400">+1.3%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-gray-300 text-sm">WCAG Compliance</span>
+                        <span class="text-green-400 text-sm font-semibold">AA Level</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div class="bg-green-400 h-2 rounded-full" style="width: 97.2%"></div>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-1">97.2% compliance score</div>
+                </div>
+            </div>
+
+            <!-- User Demographics -->
+            <div class="dashboard-card p-6">
+                <h3 class="text-xl font-semibold text-white mb-6">User Demographics</h3>
+                
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-300">Visual Impairments</span>
+                            <span class="text-white font-semibold">45.2%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-blue-400 h-2 rounded-full" style="width: 45.2%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-300">Mobility Impairments</span>
+                            <span class="text-white font-semibold">23.7%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-purple-400 h-2 rounded-full" style="width: 23.7%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-300">Hearing Impairments</span>
+                            <span class="text-white font-semibold">18.4%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-green-400 h-2 rounded-full" style="width: 18.4%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-300">Cognitive Support</span>
+                            <span class="text-white font-semibold">31.9%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-orange-400 h-2 rounded-full" style="width: 31.9%"></div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-300">No Accessibility Needs</span>
+                            <span class="text-white font-semibold">42.1%</span>
+                        </div>
+                        <div class="w-full bg-gray-700 rounded-full h-2">
+                            <div class="bg-gray-400 h-2 rounded-full" style="width: 42.1%"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 text-xs text-gray-400">
+                    Note: Users may have multiple accessibility needs
+                </div>
+            </div>
+
+            <!-- Accessibility Heatmap -->
+            <div class="dashboard-card p-6">
+                <h3 class="text-xl font-semibold text-white mb-6">Weekly Accessibility Performance</h3>
+                
+                <div class="accessibility-heatmap mb-4">
+                    <div class="text-xs text-gray-400 text-center">M</div>
+                    <div class="text-xs text-gray-400 text-center">T</div>
+                    <div class="text-xs text-gray-400 text-center">W</div>
+                    <div class="text-xs text-gray-400 text-center">T</div>
+                    <div class="text-xs text-gray-400 text-center">F</div>
+                    <div class="text-xs text-gray-400 text-center">S</div>
+                    <div class="text-xs text-gray-400 text-center">S</div>
+                    
+                    <div class="heatmap-cell heatmap-excellent">98</div>
+                    <div class="heatmap-cell heatmap-excellent">97</div>
+                    <div class="heatmap-cell heatmap-excellent">99</div>
+                    <div class="heatmap-cell heatmap-good">96</div>
+                    <div class="heatmap-cell heatmap-excellent">98</div>
+                    <div class="heatmap-cell heatmap-excellent">97</div>
+                    <div class="heatmap-cell heatmap-good">95</div>
+                </div>
+                
+                <div class="flex items-center justify-between text-xs">
+                    <div class="flex items-center">
+                        <div class="heatmap-cell heatmap-poor mr-1" style="width: 12px; height: 12px;"></div>
+                        <span class="text-gray-400">Poor (&lt;90%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="heatmap-cell heatmap-fair mr-1" style="width: 12px; height: 12px;"></div>
+                        <span class="text-gray-400">Fair (90-94%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="heatmap-cell heatmap-good mr-1" style="width: 12px; height: 12px;"></div>
+                        <span class="text-gray-400">Good (95-97%)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="heatmap-cell heatmap-excellent mr-1" style="width: 12px; height: 12px;"></div>
+                        <span class="text-gray-400">Excellent (98%+)</span>
+                    </div>
+                </div>
+                
+                <div class="mt-4 p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                    <div class="flex items-center">
+                        <i class="fas fa-check-circle text-green-400 mr-2"></i>
+                        <span class="text-green-400 text-sm font-medium">All systems operational</span>
+                    </div>
+                    <div class="text-xs text-gray-300 mt-1">
+                        Accessibility performance above target (95%+)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Monitoring -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            <!-- Audio Performance -->
+            <div class="dashboard-card performance-card p-6">
+                <h3 class="text-xl font-semibold text-white mb-6">Audio System Performance</h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">1.2s</div>
+                        <div class="text-sm text-gray-300">Avg Load Time</div>
+                        <div class="text-xs text-green-400">-0.3s vs target</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-white">99.8%</div>
+                        <div class="text-sm text-gray-300">Audio Quality</div>
+                        <div class="text-xs text-green-400">+0.2% vs target</div>
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300 text-sm">Spatial Audio Processing</span>
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-700 rounded-full h-2 mr-2">
+                                <div class="bg-pink-400 h-2 rounded-full" style="width: 92%"></div>
+                            </div>
+                            <span class="text-white text-sm">92%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300 text-sm">Voice Recognition</span>
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-700 rounded-full h-2 mr-2">
+                                <div class="bg-pink-400 h-2 rounded-full" style="width: 96%"></div>
+                            </div>
+                            <span class="text-white text-sm">96%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300 text-sm">Audio Streaming</span>
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-700 rounded-full h-2 mr-2">
+                                <div class="bg-pink-400 h-2 rounded-full" style="width: 98%"></div>
+                            </div>
+                            <span class="text-white text-sm">98%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-300 text-sm">Cache Hit Rate</span>
+                        <div class="flex items-center">
+                            <div class="w-24 bg-gray-700 rounded-full h-2 mr-2">
+                                <div class="bg-pink-400 h-2 rounded-full" style="width: 89%"></div>
+                            </div>
+                            <span class="text-white text-sm">89%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Activity -->
+            <div class="dashboard-card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-white">Live Activity Feed</h3>
+                    <div class="flex items-center">
+                        <span class="status-indicator status-healthy real-time-indicator"></span>
+                        <span class="text-green-400 text-sm">Live</span>
+                    </div>
+                </div>
+                
+                <div class="space-y-3 max-h-64 overflow-y-auto">
+                    <div class="flex items-start space-x-3 p-3 bg-blue-500/10 rounded-lg">
+                        <i class="fas fa-user-plus text-blue-400 mt-1"></i>
+                        <div>
+                            <div class="text-white text-sm">New user registered</div>
+                            <div class="text-gray-400 text-xs">Screen reader user from UK • 2m ago</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3 p-3 bg-green-500/10 rounded-lg">
+                        <i class="fas fa-trophy text-green-400 mt-1"></i>
+                        <div>
+                            <div class="text-white text-sm">Case completed</div>
+                            <div class="text-gray-400 text-xs">Victorian London mystery • 3m ago</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3 p-3 bg-purple-500/10 rounded-lg">
+                        <i class="fas fa-microphone text-purple-400 mt-1"></i>
+                        <div>
+                            <div class="text-white text-sm">High voice accuracy achieved</div>
+                            <div class="text-gray-400 text-xs">98.7% recognition rate • 5m ago</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3 p-3 bg-orange-500/10 rounded-lg">
+                        <i class="fas fa-star text-orange-400 mt-1"></i>
+                        <div>
+                            <div class="text-white text-sm">5-star rating received</div>
+                            <div class="text-gray-400 text-xs">"Best accessible game ever!" • 8m ago</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-start space-x-3 p-3 bg-blue-500/10 rounded-lg">
+                        <i class="fas fa-comment text-blue-400 mt-1"></i>
+                        <div>
+                            <div class="text-white text-sm">Feedback submitted</div>
+                            <div class="text-gray-400 text-xs">Accessibility improvement suggestion • 12m ago</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert System -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="dashboard-card p-4 border-green-500/30 bg-green-500/10">
+                <div class="flex items-center">
+                    <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                    <div>
+                        <div class="text-green-400 font-semibold text-sm">All Systems Operational</div>
+                        <div class="text-gray-300 text-xs">100% uptime this week</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-card p-4 border-blue-500/30 bg-blue-500/10">
+                <div class="flex items-center">
+                    <i class="fas fa-info-circle text-blue-400 mr-3"></i>
+                    <div>
+                        <div class="text-blue-400 font-semibold text-sm">Performance Optimization</div>
+                        <div class="text-gray-300 text-xs">Audio loading improved by 23%</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="dashboard-card p-4 border-purple-500/30 bg-purple-500/10">
+                <div class="flex items-center">
+                    <i class="fas fa-star text-purple-400 mr-3"></i>
+                    <div>
+                        <div class="text-purple-400 font-semibold text-sm">Milestone Achieved</div>
+                        <div class="text-gray-300 text-xs">10K+ accessibility-positive reviews</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Chart.js with dark theme
+        Chart.defaults.color = '#9ca3af';
+        Chart.defaults.borderColor = '#374151';
+        Chart.defaults.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+
+        // Engagement Chart
+        const engagementCtx = document.getElementById('engagementChart').getContext('2d');
+        new Chart(engagementCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Active Users',
+                    data: [8420, 9650, 11250, 12200, 13100, 12850, 11900],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#3b82f6',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }, {
+                    label: 'Screen Reader Users',
+                    data: [5750, 6590, 7680, 8330, 8950, 8770, 8130],
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#10b981',
+                    pointBorderColor: '#ffffff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: 'rgba(75, 85, 99, 0.3)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(75, 85, 99, 0.3)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Voice Accuracy Chart
+        const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+        new Chart(accuracyCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Successful', 'Retry Required', 'Failed'],
+                datasets: [{
+                    data: [95.7, 3.8, 0.5],
+                    backgroundColor: [
+                        '#10b981',
+                        '#f59e0b', 
+                        '#ef4444'
+                    ],
+                    borderColor: [
+                        '#10b981',
+                        '#f59e0b',
+                        '#ef4444'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 15,
+                            usePointStyle: true
+                        }
+                    }
+                }
+            }
+        });
+
+        // Simulate real-time updates
+        setInterval(() => {
+            const indicators = document.querySelectorAll('.real-time-indicator');
+            indicators.forEach(indicator => {
+                indicator.style.opacity = indicator.style.opacity === '0.6' ? '1' : '0.6';
+            });
+        }, 1000);
+
+        // Add interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Animate counters on load
+            const counters = document.querySelectorAll('.text-3xl.font-bold');
+            counters.forEach(counter => {
+                const target = parseInt(counter.textContent.replace(/[^\d]/g, ''));
+                let current = 0;
+                const increment = target / 50;
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    
+                    // Format number based on original format
+                    const originalText = counter.textContent;
+                    if (originalText.includes('K')) {
+                        counter.textContent = Math.floor(current / 1000) + 'K';
+                    } else if (originalText.includes('%')) {
+                        counter.textContent = current.toFixed(1) + '%';
+                    } else if (originalText.includes(',')) {
+                        counter.textContent = current.toLocaleString();
+                    } else {
+                        counter.textContent = Math.floor(current);
+                    }
+                }, 20);
+            });
+        });
+    </script>
+</body>
+</html>

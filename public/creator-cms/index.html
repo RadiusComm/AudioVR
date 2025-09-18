@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR Creator Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .creator-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .creator-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .sidebar {
+            background: rgba(0, 0, 0, 0.3);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-item {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 4px 8px;
+        }
+        
+        .sidebar-item:hover {
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        .sidebar-item.active {
+            background: rgba(139, 92, 246, 0.3);
+            border-left: 4px solid #8b5cf6;
+        }
+        
+        .content-panel {
+            display: none;
+        }
+        
+        .content-panel.active {
+            display: block;
+        }
+        
+        .editor-toolbar {
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .form-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(139, 92, 246, 0.5);
+            outline: none;
+        }
+        
+        .character-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .scene-node {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .scene-node:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        
+        .scene-node.selected {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.7);
+        }
+        
+        .accessibility-check {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+        
+        .accessibility-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.2);
+        }
+        
+        .accessibility-error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+        
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.6s ease-in-out;
+        }
+        
+        .tab-button {
+            padding: 12px 24px;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .tab-button.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-bottom-color: #8b5cf6;
+        }
+        
+        .audio-waveform {
+            height: 60px;
+            background: linear-gradient(90deg, #8b5cf6, #3b82f6);
+            border-radius: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .waveform-bar {
+            position: absolute;
+            bottom: 0;
+            width: 2px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 1px;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="sidebar w-64 p-4">
+            <div class="mb-8">
+                <h2 class="text-xl font-bold text-white mb-2">
+                    <i class="fas fa-palette mr-2 text-purple-400"></i>
+                    Creator Studio
+                </h2>
+                <p class="text-gray-400 text-sm">Build immersive mysteries</p>
+            </div>
+            
+            <nav class="space-y-2">
+                <button class="sidebar-item active w-full text-left p-3 text-white" onclick="showPanel('dashboard')">
+                    <i class="fas fa-chart-pie mr-3"></i>Dashboard
+                </button>
+                <button class="sidebar-item w-full text-left p-3 text-gray-300" onclick="showPanel('story-builder')">
+                    <i class="fas fa-book mr-3"></i>Story Builder
+                </button>
+                <button class="sidebar-item w-full text-left p-3 text-gray-300" onclick="showPanel('characters')">
+                    <i class="fas fa-users mr-3"></i>Characters
+                </button>
+                <button class="sidebar-item w-full text-left p-3 text-gray-300" onclick="showPanel('audio-assets')">
+                    <i class="fas fa-volume-up mr-3"></i>Audio Assets
+                </button>
+                <button class="sidebar-item w-full text-left p-3 text-gray-300" onclick="showPanel('accessibility')">
+                    <i class="fas fa-universal-access mr-3"></i>Accessibility
+                </button>
+                <button class="sidebar-item w-full text-left p-3 text-gray-300" onclick="showPanel('testing')">
+                    <i class="fas fa-flask mr-3"></i>Testing & Preview
+                </button>
+                <button class="sidebar-item w-full text-left p-3 text-gray-300" onclick="showPanel('publish')">
+                    <i class="fas fa-cloud-upload-alt mr-3"></i>Publish
+                </button>
+            </nav>
+            
+            <div class="mt-8 pt-4 border-t border-gray-700">
+                <div class="creator-card p-4">
+                    <div class="text-sm text-gray-300 mb-2">Project Progress</div>
+                    <div class="flex items-center space-x-3">
+                        <svg class="progress-ring w-12 h-12">
+                            <circle cx="24" cy="24" r="20" stroke="rgba(139, 92, 246, 0.2)" stroke-width="4" fill="transparent"/>
+                            <circle class="progress-ring-circle" cx="24" cy="24" r="20" stroke="#8b5cf6" stroke-width="4" fill="transparent" style="stroke-dashoffset: 75.36"/>
+                        </svg>
+                        <div>
+                            <div class="text-white font-semibold">70%</div>
+                            <div class="text-xs text-gray-400">Complete</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Dashboard Panel -->
+            <div id="dashboard" class="content-panel active p-8">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Mystery Dashboard</h1>
+                    <p class="text-gray-300">Overview of your current mystery project</p>
+                </div>
+
+                <!-- Project Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="creator-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-white">5</div>
+                                <div class="text-gray-300 text-sm">Chapters</div>
+                            </div>
+                            <i class="fas fa-book text-blue-400 text-2xl"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="creator-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-white">8</div>
+                                <div class="text-gray-300 text-sm">Characters</div>
+                            </div>
+                            <i class="fas fa-users text-purple-400 text-2xl"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="creator-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-white">24</div>
+                                <div class="text-gray-300 text-sm">Audio Clips</div>
+                            </div>
+                            <i class="fas fa-microphone text-green-400 text-2xl"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="creator-card p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-2xl font-bold text-white">97%</div>
+                                <div class="text-gray-300 text-sm">Accessibility</div>
+                            </div>
+                            <i class="fas fa-universal-access text-orange-400 text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="creator-card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">Recent Changes</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-edit text-blue-400"></i>
+                                <div>
+                                    <div class="text-white text-sm">Updated Chapter 3 dialogue</div>
+                                    <div class="text-gray-400 text-xs">2 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-plus text-green-400"></i>
+                                <div>
+                                    <div class="text-white text-sm">Added new character: Detective Morgan</div>
+                                    <div class="text-gray-400 text-xs">5 hours ago</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-volume-up text-purple-400"></i>
+                                <div>
+                                    <div class="text-white text-sm">Uploaded ambient audio for Library scene</div>
+                                    <div class="text-gray-400 text-xs">1 day ago</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="creator-card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">Accessibility Status</h3>
+                        <div class="space-y-4">
+                            <div class="accessibility-check p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-white font-medium">Audio Descriptions</div>
+                                        <div class="text-gray-300 text-sm">All scenes have detailed descriptions</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accessibility-warning p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-exclamation-triangle text-yellow-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-white font-medium">Voice Commands</div>
+                                        <div class="text-gray-300 text-sm">3 interactions need voice alternatives</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="accessibility-check p-3 rounded-lg">
+                                <div class="flex items-center">
+                                    <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                                    <div>
+                                        <div class="text-white font-medium">Spatial Audio</div>
+                                        <div class="text-gray-300 text-sm">All audio positioned correctly</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Story Builder Panel -->
+            <div id="story-builder" class="content-panel p-8">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Story Builder</h1>
+                    <p class="text-gray-300">Create and structure your mystery narrative</p>
+                </div>
+
+                <!-- Story Overview -->
+                <div class="creator-card p-6 mb-8">
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-white font-medium mb-2">Mystery Title</label>
+                            <input type="text" class="form-input w-full p-3 rounded-lg" value="The Whitechapel Enigma" placeholder="Enter mystery title">
+                        </div>
+                        <div>
+                            <label class="block text-white font-medium mb-2">Setting</label>
+                            <select class="form-input w-full p-3 rounded-lg">
+                                <option>Victorian London</option>
+                                <option>Modern Tokyo</option>
+                                <option>Space Station Omega</option>
+                                <option>Custom Setting</option>
+                            </select>
+                        </div>
+                        <div class="lg:col-span-2">
+                            <label class="block text-white font-medium mb-2">Mystery Summary</label>
+                            <textarea class="form-input w-full p-3 rounded-lg h-24" placeholder="Brief description of the mystery...">A series of mysterious murders plague the foggy streets of Whitechapel. The killer leaves cryptic clues that only the most observant detective can decipher.</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chapter Structure -->
+                <div class="creator-card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-xl font-semibold text-white">Chapter Structure</h3>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-plus mr-2"></i>Add Chapter
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="scene-node selected">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-white font-semibold">Chapter 1: The Discovery</h4>
+                                <div class="flex space-x-2">
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-copy"></i></button>
+                                    <button class="text-gray-400 hover:text-red-400"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-3">The body is discovered in a narrow alley. Players must examine the crime scene and gather initial clues.</p>
+                            <div class="flex items-center space-x-4 text-sm">
+                                <span class="text-blue-400"><i class="fas fa-clock mr-1"></i>8 minutes</span>
+                                <span class="text-purple-400"><i class="fas fa-users mr-1"></i>3 characters</span>
+                                <span class="text-green-400"><i class="fas fa-search mr-1"></i>5 clues</span>
+                                <span class="text-orange-400"><i class="fas fa-volume-up mr-1"></i>12 audio clips</span>
+                            </div>
+                        </div>
+                        
+                        <div class="scene-node">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-white font-semibold">Chapter 2: Witness Interviews</h4>
+                                <div class="flex space-x-2">
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-copy"></i></button>
+                                    <button class="text-gray-400 hover:text-red-400"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-3">Interview key witnesses and gather their testimonies. Detect lies and inconsistencies in their stories.</p>
+                            <div class="flex items-center space-x-4 text-sm">
+                                <span class="text-blue-400"><i class="fas fa-clock mr-1"></i>12 minutes</span>
+                                <span class="text-purple-400"><i class="fas fa-users mr-1"></i>4 characters</span>
+                                <span class="text-green-400"><i class="fas fa-search mr-1"></i>3 clues</span>
+                                <span class="text-orange-400"><i class="fas fa-volume-up mr-1"></i>18 audio clips</span>
+                            </div>
+                        </div>
+                        
+                        <div class="scene-node">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="text-white font-semibold">Chapter 3: Following Leads</h4>
+                                <div class="flex space-x-2">
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-edit"></i></button>
+                                    <button class="text-gray-400 hover:text-white"><i class="fas fa-copy"></i></button>
+                                    <button class="text-gray-400 hover:text-red-400"><i class="fas fa-trash"></i></button>
+                                </div>
+                            </div>
+                            <p class="text-gray-300 text-sm mb-3">Track down leads from witness testimonies and physical evidence. Visit multiple locations.</p>
+                            <div class="flex items-center space-x-4 text-sm">
+                                <span class="text-blue-400"><i class="fas fa-clock mr-1"></i>15 minutes</span>
+                                <span class="text-purple-400"><i class="fas fa-users mr-1"></i>2 characters</span>
+                                <span class="text-green-400"><i class="fas fa-search mr-1"></i>7 clues</span>
+                                <span class="text-orange-400"><i class="fas fa-volume-up mr-1"></i>20 audio clips</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Characters Panel -->
+            <div id="characters" class="content-panel p-8">
+                <div class="mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">Character Management</h1>
+                            <p class="text-gray-300">Create and manage characters for your mystery</p>
+                        </div>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-plus mr-2"></i>Add Character
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Character Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Character Card 1 -->
+                    <div class="creator-card p-6">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="character-avatar">
+                                🕵️
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold">Inspector Holmes</h3>
+                                <p class="text-gray-400 text-sm">Lead Detective</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-1">Voice Actor</label>
+                                <select class="form-input w-full p-2 rounded text-sm">
+                                    <option>British Male - Deep</option>
+                                    <option>British Male - Standard</option>
+                                    <option>Custom Voice</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-1">Personality Traits</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs">Analytical</span>
+                                    <span class="bg-purple-500/20 text-purple-300 px-2 py-1 rounded text-xs">Methodical</span>
+                                    <span class="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs">Observant</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-1">Dialogue Lines</label>
+                                <div class="text-white font-semibold">24 lines</div>
+                                <div class="text-xs text-gray-400">Last updated 2 hours ago</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2 mt-4">
+                            <button class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-all">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </button>
+                            <button class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm transition-all">
+                                <i class="fas fa-play mr-1"></i>Preview
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Character Card 2 -->
+                    <div class="creator-card p-6">
+                        <div class="flex items-center space-x-4 mb-4">
+                            <div class="character-avatar bg-gradient-to-br from-pink-500 to-red-500">
+                                👩
+                            </div>
+                            <div>
+                                <h3 class="text-white font-semibold">Mary Kelly</h3>
+                                <p class="text-gray-400 text-sm">Key Witness</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-1">Voice Actor</label>
+                                <select class="form-input w-full p-2 rounded text-sm">
+                                    <option>Irish Female - Nervous</option>
+                                    <option>British Female - Standard</option>
+                                    <option>Custom Voice</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-1">Personality Traits</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs">Nervous</span>
+                                    <span class="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs">Fearful</span>
+                                    <span class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded text-xs">Helpful</span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm mb-1">Dialogue Lines</label>
+                                <div class="text-white font-semibold">18 lines</div>
+                                <div class="text-xs text-gray-400">Last updated 5 hours ago</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-2 mt-4">
+                            <button class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-3 rounded text-sm transition-all">
+                                <i class="fas fa-edit mr-1"></i>Edit
+                            </button>
+                            <button class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 px-3 rounded text-sm transition-all">
+                                <i class="fas fa-play mr-1"></i>Preview
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add New Character Card -->
+                    <div class="creator-card p-6 border-dashed border-gray-600 hover:border-purple-400 transition-all cursor-pointer">
+                        <div class="flex flex-col items-center justify-center h-full text-center">
+                            <i class="fas fa-plus text-4xl text-gray-400 mb-4"></i>
+                            <h3 class="text-gray-300 font-semibold mb-2">Add New Character</h3>
+                            <p class="text-gray-500 text-sm">Create a new character for your mystery</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Audio Assets Panel -->
+            <div id="audio-assets" class="content-panel p-8">
+                <div class="mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h1 class="text-3xl font-bold text-white mb-2">Audio Asset Manager</h1>
+                            <p class="text-gray-300">Manage voice recordings, sound effects, and ambient audio</p>
+                        </div>
+                        <button class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-all">
+                            <i class="fas fa-upload mr-2"></i>Upload Audio
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio Categories -->
+                <div class="mb-6">
+                    <div class="flex space-x-4">
+                        <button class="tab-button active text-white">
+                            <i class="fas fa-microphone mr-2"></i>Dialogue
+                        </button>
+                        <button class="tab-button text-gray-400">
+                            <i class="fas fa-music mr-2"></i>Ambient
+                        </button>
+                        <button class="tab-button text-gray-400">
+                            <i class="fas fa-volume-up mr-2"></i>Sound Effects
+                        </button>
+                        <button class="tab-button text-gray-400">
+                            <i class="fas fa-bell mr-2"></i>UI Sounds
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Audio List -->
+                <div class="creator-card p-6">
+                    <div class="space-y-4">
+                        <!-- Audio Item 1 -->
+                        <div class="flex items-center space-x-4 p-4 bg-gray-800/30 rounded-lg">
+                            <div class="audio-waveform w-24 relative">
+                                <div class="waveform-bar" style="left: 5%; height: 20%"></div>
+                                <div class="waveform-bar" style="left: 10%; height: 40%"></div>
+                                <div class="waveform-bar" style="left: 15%; height: 60%"></div>
+                                <div class="waveform-bar" style="left: 20%; height: 80%"></div>
+                                <div class="waveform-bar" style="left: 25%; height: 100%"></div>
+                                <div class="waveform-bar" style="left: 30%; height: 70%"></div>
+                                <div class="waveform-bar" style="left: 35%; height: 50%"></div>
+                                <div class="waveform-bar" style="left: 40%; height: 90%"></div>
+                                <div class="waveform-bar" style="left: 45%; height: 30%"></div>
+                                <div class="waveform-bar" style="left: 50%; height: 60%"></div>
+                                <div class="waveform-bar" style="left: 55%; height: 40%"></div>
+                                <div class="waveform-bar" style="left: 60%; height: 80%"></div>
+                                <div class="waveform-bar" style="left: 65%; height: 20%"></div>
+                                <div class="waveform-bar" style="left: 70%; height: 50%"></div>
+                                <div class="waveform-bar" style="left: 75%; height: 70%"></div>
+                                <div class="waveform-bar" style="left: 80%; height: 30%"></div>
+                                <div class="waveform-bar" style="left: 85%; height: 10%"></div>
+                                <div class="waveform-bar" style="left: 90%; height: 5%"></div>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-semibold">Holmes_Opening_Line.wav</h4>
+                                <p class="text-gray-400 text-sm">"Good evening. I am Inspector Holmes..."</p>
+                                <div class="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                                    <span>Duration: 00:08</span>
+                                    <span>Size: 1.2 MB</span>
+                                    <span>Quality: 44.1kHz</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-green-400 hover:text-green-300 p-2">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="text-blue-400 hover:text-blue-300 p-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-purple-400 hover:text-purple-300 p-2">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="text-red-400 hover:text-red-300 p-2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Audio Item 2 -->
+                        <div class="flex items-center space-x-4 p-4 bg-gray-800/30 rounded-lg">
+                            <div class="audio-waveform w-24 relative">
+                                <div class="waveform-bar" style="left: 5%; height: 15%"></div>
+                                <div class="waveform-bar" style="left: 10%; height: 35%"></div>
+                                <div class="waveform-bar" style="left: 15%; height: 55%"></div>
+                                <div class="waveform-bar" style="left: 20%; height: 75%"></div>
+                                <div class="waveform-bar" style="left: 25%; height: 95%"></div>
+                                <div class="waveform-bar" style="left: 30%; height: 85%"></div>
+                                <div class="waveform-bar" style="left: 35%; height: 65%"></div>
+                                <div class="waveform-bar" style="left: 40%; height: 45%"></div>
+                                <div class="waveform-bar" style="left: 45%; height: 25%"></div>
+                                <div class="waveform-bar" style="left: 50%; height: 45%"></div>
+                                <div class="waveform-bar" style="left: 55%; height: 65%"></div>
+                                <div class="waveform-bar" style="left: 60%; height: 85%"></div>
+                                <div class="waveform-bar" style="left: 65%; height: 75%"></div>
+                                <div class="waveform-bar" style="left: 70%; height: 55%"></div>
+                                <div class="waveform-bar" style="left: 75%; height: 35%"></div>
+                                <div class="waveform-bar" style="left: 80%; height: 15%"></div>
+                                <div class="waveform-bar" style="left: 85%; height: 5%"></div>
+                                <div class="waveform-bar" style="left: 90%; height: 2%"></div>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-semibold">Mary_Witness_Testimony.wav</h4>
+                                <p class="text-gray-400 text-sm">"Oh dear, it was terrible! I saw..."</p>
+                                <div class="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                                    <span>Duration: 00:12</span>
+                                    <span>Size: 1.8 MB</span>
+                                    <span>Quality: 44.1kHz</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-green-400 hover:text-green-300 p-2">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="text-blue-400 hover:text-blue-300 p-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-purple-400 hover:text-purple-300 p-2">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="text-red-400 hover:text-red-300 p-2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Audio Item 3 -->
+                        <div class="flex items-center space-x-4 p-4 bg-gray-800/30 rounded-lg">
+                            <div class="audio-waveform w-24 relative">
+                                <div class="waveform-bar" style="left: 5%; height: 30%"></div>
+                                <div class="waveform-bar" style="left: 10%; height: 50%"></div>
+                                <div class="waveform-bar" style="left: 15%; height: 70%"></div>
+                                <div class="waveform-bar" style="left: 20%; height: 90%"></div>
+                                <div class="waveform-bar" style="left: 25%; height: 60%"></div>
+                                <div class="waveform-bar" style="left: 30%; height: 40%"></div>
+                                <div class="waveform-bar" style="left: 35%; height: 80%"></div>
+                                <div class="waveform-bar" style="left: 40%; height: 100%"></div>
+                                <div class="waveform-bar" style="left: 45%; height: 70%"></div>
+                                <div class="waveform-bar" style="left: 50%; height: 50%"></div>
+                                <div class="waveform-bar" style="left: 55%; height: 30%"></div>
+                                <div class="waveform-bar" style="left: 60%; height: 60%"></div>
+                                <div class="waveform-bar" style="left: 65%; height: 40%"></div>
+                                <div class="waveform-bar" style="left: 70%; height: 20%"></div>
+                                <div class="waveform-bar" style="left: 75%; height: 10%"></div>
+                                <div class="waveform-bar" style="left: 80%; height: 5%"></div>
+                                <div class="waveform-bar" style="left: 85%; height: 2%"></div>
+                                <div class="waveform-bar" style="left: 90%; height: 1%"></div>
+                            </div>
+                            <div class="flex-1">
+                                <h4 class="text-white font-semibold">Scene_Description_Alley.wav</h4>
+                                <p class="text-gray-400 text-sm">"The narrow alley is shrouded in thick fog..."</p>
+                                <div class="flex items-center space-x-4 text-xs text-gray-500 mt-1">
+                                    <span>Duration: 00:15</span>
+                                    <span>Size: 2.1 MB</span>
+                                    <span>Quality: 44.1kHz</span>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="text-green-400 hover:text-green-300 p-2">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="text-blue-400 hover:text-blue-300 p-2">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="text-purple-400 hover:text-purple-300 p-2">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                                <button class="text-red-400 hover:text-red-300 p-2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accessibility Panel -->
+            <div id="accessibility" class="content-panel p-8">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Accessibility Validator</h1>
+                    <p class="text-gray-300">Ensure your mystery meets accessibility standards</p>
+                </div>
+
+                <!-- Accessibility Score -->
+                <div class="creator-card p-6 mb-8">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-2xl font-bold text-white mb-2">Overall Score: 97%</h3>
+                            <p class="text-green-400 font-medium">WCAG 2.1 AA Compliant</p>
+                        </div>
+                        <div class="text-right">
+                            <button class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-all mb-2">
+                                <i class="fas fa-check mr-2"></i>Run Full Audit
+                            </button>
+                            <p class="text-gray-400 text-sm">Last checked: 2 hours ago</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accessibility Checks -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-6">
+                        <!-- Audio Descriptions -->
+                        <div class="accessibility-check p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-white font-semibold">Audio Descriptions</h4>
+                                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Scene descriptions</span>
+                                    <span class="text-green-400">24/24 ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Character descriptions</span>
+                                    <span class="text-green-400">8/8 ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Action descriptions</span>
+                                    <span class="text-green-400">15/15 ✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice Commands -->
+                        <div class="accessibility-warning p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-white font-semibold">Voice Commands</h4>
+                                <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Navigation commands</span>
+                                    <span class="text-green-400">18/18 ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Interaction commands</span>
+                                    <span class="text-yellow-400">12/15 ⚠</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Menu commands</span>
+                                    <span class="text-green-400">6/6 ✓</span>
+                                </div>
+                            </div>
+                            <button class="mt-3 text-yellow-400 text-sm hover:text-yellow-300">
+                                <i class="fas fa-external-link-alt mr-1"></i>
+                                View missing commands
+                            </button>
+                        </div>
+
+                        <!-- Spatial Audio -->
+                        <div class="accessibility-check p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-white font-semibold">Spatial Audio</h4>
+                                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Positional audio</span>
+                                    <span class="text-green-400">All scenes ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Audio contrast</span>
+                                    <span class="text-green-400">Optimal ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Volume controls</span>
+                                    <span class="text-green-400">Available ✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <!-- Screen Reader Support -->
+                        <div class="accessibility-check p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-white font-semibold">Screen Reader Support</h4>
+                                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">ARIA labels</span>
+                                    <span class="text-green-400">Complete ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Semantic structure</span>
+                                    <span class="text-green-400">Valid ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Focus management</span>
+                                    <span class="text-green-400">Implemented ✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Motor Accessibility -->
+                        <div class="accessibility-check p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-white font-semibold">Motor Accessibility</h4>
+                                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Voice-only navigation</span>
+                                    <span class="text-green-400">100% ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">No time limits</span>
+                                    <span class="text-green-400">Confirmed ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Gesture alternatives</span>
+                                    <span class="text-green-400">Available ✓</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cognitive Support -->
+                        <div class="accessibility-check p-6 rounded-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <h4 class="text-white font-semibold">Cognitive Support</h4>
+                                <i class="fas fa-check-circle text-green-400 text-xl"></i>
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Clear instructions</span>
+                                    <span class="text-green-400">Available ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Repetition options</span>
+                                    <span class="text-green-400">Implemented ✓</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-300">Progress indicators</span>
+                                    <span class="text-green-400">Clear ✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Testing Panel -->
+            <div id="testing" class="content-panel p-8">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Testing & Preview</h1>
+                    <p class="text-gray-300">Test your mystery with different accessibility modes</p>
+                </div>
+
+                <!-- Testing Options -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="creator-card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">
+                            <i class="fas fa-eye text-blue-400 mr-3"></i>
+                            Visual Impairment Test
+                        </h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Test your mystery with screen reader simulation and voice-only navigation.
+                        </p>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg transition-all">
+                            <i class="fas fa-play mr-2"></i>Start Screen Reader Test
+                        </button>
+                    </div>
+
+                    <div class="creator-card p-6">
+                        <h3 class="text-xl font-semibold text-white mb-4">
+                            <i class="fas fa-hand-paper text-purple-400 mr-3"></i>
+                            Motor Impairment Test
+                        </h3>
+                        <p class="text-gray-300 text-sm mb-4">
+                            Test voice-only controls and ensure no timed interactions are required.
+                        </p>
+                        <button class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg transition-all">
+                            <i class="fas fa-play mr-2"></i>Start Voice-Only Test
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Test Results -->
+                <div class="creator-card p-6">
+                    <h3 class="text-xl font-semibold text-white mb-6">Recent Test Results</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-400 mr-3 text-xl"></i>
+                                <div>
+                                    <h4 class="text-white font-medium">Screen Reader Navigation Test</h4>
+                                    <p class="text-gray-400 text-sm">All elements properly announced</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-400 font-semibold">PASS</div>
+                                <div class="text-xs text-gray-400">2 hours ago</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-exclamation-triangle text-yellow-400 mr-3 text-xl"></i>
+                                <div>
+                                    <h4 class="text-white font-medium">Voice Command Coverage Test</h4>
+                                    <p class="text-gray-400 text-sm">3 interactions need voice alternatives</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-yellow-400 font-semibold">WARNING</div>
+                                <div class="text-xs text-gray-400">3 hours ago</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-400 mr-3 text-xl"></i>
+                                <div>
+                                    <h4 class="text-white font-medium">Spatial Audio Positioning Test</h4>
+                                    <p class="text-gray-400 text-sm">All audio correctly positioned</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-green-400 font-semibold">PASS</div>
+                                <div class="text-xs text-gray-400">5 hours ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Publish Panel -->
+            <div id="publish" class="content-panel p-8">
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-white mb-2">Publish Mystery</h1>
+                    <p class="text-gray-300">Share your mystery with the AudioVR community</p>
+                </div>
+
+                <!-- Publish Checklist -->
+                <div class="creator-card p-6 mb-8">
+                    <h3 class="text-xl font-semibold text-white mb-6">Pre-Publish Checklist</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Story structure complete</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                            <span class="text-gray-300">All characters have voice actors</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Audio assets uploaded and positioned</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-exclamation-circle text-yellow-400 mr-3"></i>
+                            <span class="text-gray-300">Accessibility validation (97% - Minor issues)</span>
+                        </div>
+                        <div class="flex items-center">
+                            <i class="fas fa-check-circle text-green-400 mr-3"></i>
+                            <span class="text-gray-300">Testing completed</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Publishing Options -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="creator-card p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Publishing Settings</h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-300 text-sm font-medium mb-2">Visibility</label>
+                                <select class="form-input w-full p-3 rounded-lg">
+                                    <option>Public - Available to all users</option>
+                                    <option>Unlisted - Only with direct link</option>
+                                    <option>Private - Only for testing</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm font-medium mb-2">Difficulty Level</label>
+                                <select class="form-input w-full p-3 rounded-lg">
+                                    <option>Beginner (1-2 stars)</option>
+                                    <option>Intermediate (3 stars)</option>
+                                    <option>Advanced (4-5 stars)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm font-medium mb-2">Content Rating</label>
+                                <select class="form-input w-full p-3 rounded-lg">
+                                    <option>Everyone (E)</option>
+                                    <option>Teen (T)</option>
+                                    <option>Mature (M)</option>
+                                </select>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-300 text-sm font-medium mb-2">Tags</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <span class="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm">Mystery</span>
+                                    <span class="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm">Victorian</span>
+                                    <span class="bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm">Detective</span>
+                                    <button class="bg-gray-700 hover:bg-gray-600 text-gray-300 px-3 py-1 rounded-full text-sm transition-all">
+                                        <i class="fas fa-plus mr-1"></i>Add Tag
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="creator-card p-6">
+                        <h3 class="text-lg font-semibold text-white mb-4">Ready to Publish</h3>
+                        
+                        <div class="space-y-6">
+                            <div class="text-center">
+                                <div class="text-6xl mb-4">🎭</div>
+                                <h4 class="text-xl font-semibold text-white mb-2">The Whitechapel Enigma</h4>
+                                <p class="text-gray-300 text-sm">A mysterious Victorian murder case</p>
+                            </div>
+                            
+                            <div class="space-y-3">
+                                <button class="w-full bg-purple-600 hover:bg-purple-700 text-white py-3 rounded-lg font-semibold transition-all">
+                                    <i class="fas fa-cloud-upload-alt mr-2"></i>
+                                    Publish Mystery
+                                </button>
+                                
+                                <button class="w-full bg-gray-700 hover:bg-gray-600 text-white py-2 rounded-lg transition-all">
+                                    <i class="fas fa-eye mr-2"></i>
+                                    Preview Before Publishing
+                                </button>
+                                
+                                <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg transition-all">
+                                    <i class="fas fa-share mr-2"></i>
+                                    Share Draft Link
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showPanel(panelId) {
+            // Hide all panels
+            document.querySelectorAll('.content-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            // Show target panel
+            document.getElementById(panelId).classList.add('active');
+            
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            event.target.classList.add('active');
+        }
+        
+        // Initialize progress ring animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressCircle = document.querySelector('.progress-ring-circle');
+            const percentage = 70;
+            const circumference = 2 * Math.PI * 20;
+            const offset = circumference - (percentage / 100) * circumference;
+            
+            setTimeout(() => {
+                progressCircle.style.strokeDashoffset = offset;
+            }, 500);
+        });
+    </script>
+</body>
+</html>

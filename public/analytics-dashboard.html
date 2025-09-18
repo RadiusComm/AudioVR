@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR Analytics Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+        }
+        
+        .metric-card {
+            transition: all 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .status-excellent { background: #10b981; }
+        .status-good { background: #f59e0b; }
+        .status-warning { background: #ef4444; }
+        
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        .live-indicator {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .data-table {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .sidebar-nav {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-item {
+            padding: 12px 16px;
+            margin: 4px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-item.active {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="w-64 glass-card m-4 mr-0 p-6">
+            <div class="flex items-center space-x-3 mb-8">
+                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold">AudioVR Analytics</h1>
+                    <p class="text-xs text-gray-400">Real-time dashboard</p>
+                </div>
+            </div>
+            
+            <nav class="space-y-2">
+                <div class="nav-item active" onclick="showSection('overview')">
+                    <i class="fas fa-tachometer-alt mr-3"></i>Overview
+                </div>
+                <div class="nav-item" onclick="showSection('accessibility')">
+                    <i class="fas fa-universal-access mr-3"></i>Accessibility
+                </div>
+                <div class="nav-item" onclick="showSection('voice-analytics')">
+                    <i class="fas fa-microphone mr-3"></i>Voice Analytics
+                </div>
+                <div class="nav-item" onclick="showSection('user-journey')">
+                    <i class="fas fa-route mr-3"></i>User Journey
+                </div>
+                <div class="nav-item" onclick="showSection('performance')">
+                    <i class="fas fa-server mr-3"></i>Performance
+                </div>
+                <div class="nav-item" onclick="showSection('content')">
+                    <i class="fas fa-book mr-3"></i>Content Analytics
+                </div>
+                <div class="nav-item" onclick="showSection('live-monitoring')">
+                    <i class="fas fa-eye mr-3"></i>Live Monitoring
+                </div>
+            </nav>
+            
+            <!-- System Status -->
+            <div class="mt-8 p-4 glass-card">
+                <h3 class="font-semibold mb-3 text-sm">System Status</h3>
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span>API Health</span>
+                        <span class="status-indicator status-excellent"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Voice Service</span>
+                        <span class="status-indicator status-excellent"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>Database</span>
+                        <span class="status-indicator status-good"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span>CDN</span>
+                        <span class="status-indicator status-excellent"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 p-4 overflow-y-auto">
+            <!-- Overview Section -->
+            <div id="overview-section" class="dashboard-section">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-2xl font-bold">Dashboard Overview</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="live-indicator bg-green-500 w-3 h-3 rounded-full"></div>
+                        <span class="text-sm text-gray-300">Live data</span>
+                        <button onclick="refreshData()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded-lg text-sm transition-all">
+                            <i class="fas fa-sync-alt mr-2"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Key Metrics Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="glass-card p-6 metric-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-300">Daily Active Users</h3>
+                            <i class="fas fa-users text-blue-400"></i>
+                        </div>
+                        <div class="text-3xl font-bold mb-2" id="daily-users">2,847</div>
+                        <div class="text-sm text-green-400">
+                            <i class="fas fa-arrow-up mr-1"></i>12.5% from yesterday
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 metric-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-300">Voice Command Accuracy</h3>
+                            <i class="fas fa-microphone text-purple-400"></i>
+                        </div>
+                        <div class="text-3xl font-bold mb-2" id="voice-accuracy">96.8%</div>
+                        <div class="text-sm text-green-400">
+                            <i class="fas fa-arrow-up mr-1"></i>2.1% from last week
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 metric-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-300">Accessibility Score</h3>
+                            <i class="fas fa-universal-access text-green-400"></i>
+                        </div>
+                        <div class="text-3xl font-bold mb-2" id="accessibility-score">94.2%</div>
+                        <div class="text-sm text-yellow-400">
+                            <i class="fas fa-minus mr-1"></i>0.3% from target
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 metric-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-300">Case Completion Rate</h3>
+                            <i class="fas fa-trophy text-yellow-400"></i>
+                        </div>
+                        <div class="text-3xl font-bold mb-2" id="completion-rate">78.4%</div>
+                        <div class="text-sm text-green-400">
+                            <i class="fas fa-arrow-up mr-1"></i>5.2% from last month
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">User Engagement Trends</h3>
+                        <div class="chart-container">
+                            <canvas id="engagement-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Voice Command Distribution</h3>
+                        <div class="chart-container">
+                            <canvas id="commands-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Commands and Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Top Voice Commands (24h)</h3>
+                        <div class="space-y-3" id="top-commands-list">
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">"Select Victorian London"</span>
+                                <span class="text-purple-400 font-semibold">1,247</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">"Examine the knife"</span>
+                                <span class="text-purple-400 font-semibold">986</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">"Talk to Holmes"</span>
+                                <span class="text-purple-400 font-semibold">743</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">"Continue investigation"</span>
+                                <span class="text-purple-400 font-semibold">652</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-gray-300">"Repeat description"</span>
+                                <span class="text-purple-400 font-semibold">589</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Recent Activity</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                                <span class="text-sm text-gray-300">New user completed Victorian London tutorial</span>
+                                <span class="text-xs text-gray-500">2m ago</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-blue-400 rounded-full"></div>
+                                <span class="text-sm text-gray-300">Voice accuracy improved to 97.1%</span>
+                                <span class="text-xs text-gray-500">5m ago</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-purple-400 rounded-full"></div>
+                                <span class="text-sm text-gray-300">Accessibility feature usage +15%</span>
+                                <span class="text-xs text-gray-500">12m ago</span>
+                            </div>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-2 h-2 bg-yellow-400 rounded-full"></div>
+                                <span class="text-sm text-gray-300">Peak concurrent users: 1,247</span>
+                                <span class="text-xs text-gray-500">18m ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accessibility Section -->
+            <div id="accessibility-section" class="dashboard-section" style="display: none;">
+                <h2 class="text-2xl font-bold mb-6">Accessibility Analytics</h2>
+                
+                <!-- WCAG Compliance Scores -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">WCAG 2.1 AA Compliance</h3>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-green-400 mb-2">94.2%</div>
+                            <p class="text-sm text-gray-300">Overall Score</p>
+                        </div>
+                        <div class="mt-6 space-y-3">
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Keyboard Navigation</span>
+                                    <span>96%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 96%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Screen Reader</span>
+                                    <span>95%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 95%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Voice Navigation</span>
+                                    <span>98%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 98%"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-sm mb-1">
+                                    <span>Audio Clarity</span>
+                                    <span>92%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 92%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">Accessibility Feature Usage</h3>
+                        <div class="chart-container">
+                            <canvas id="accessibility-usage-chart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4">User Feedback</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm">Voice Commands</span>
+                                    <span class="text-yellow-400">★ 4.8</span>
+                                </div>
+                                <p class="text-xs text-gray-400">"Very intuitive and responsive"</p>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm">Spatial Audio</span>
+                                    <span class="text-yellow-400">★ 4.9</span>
+                                </div>
+                                <p class="text-xs text-gray-400">"Incredibly immersive experience"</p>
+                            </div>
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm">Screen Reader</span>
+                                    <span class="text-yellow-400">★ 4.7</span>
+                                </div>
+                                <p class="text-xs text-gray-400">"Perfect compatibility with VoiceOver"</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accessibility Insights -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold mb-4">Accessibility Insights & Recommendations</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-medium text-green-400 mb-3">
+                                <i class="fas fa-check-circle mr-2"></i>Strengths
+                            </h4>
+                            <ul class="space-y-2 text-sm text-gray-300">
+                                <li>• Voice command accuracy consistently above 95%</li>
+                                <li>• Screen reader compatibility rated excellent by users</li>
+                                <li>• Spatial audio positioning helps navigation</li>
+                                <li>• Haptic feedback enhances user experience</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-yellow-400 mb-3">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>Areas for Improvement
+                            </h4>
+                            <ul class="space-y-2 text-sm text-gray-300">
+                                <li>• Audio clarity score could be improved by 3%</li>
+                                <li>• Some users report difficulty with complex commands</li>
+                                <li>• Color contrast needs minor adjustments</li>
+                                <li>• Consider adding more voice training options</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Other sections would continue here... -->
+            <!-- For brevity, I'll create placeholders for the remaining sections -->
+            
+            <div id="voice-analytics-section" class="dashboard-section" style="display: none;">
+                <h2 class="text-2xl font-bold mb-6">Voice Analytics</h2>
+                <div class="glass-card p-6">
+                    <p class="text-gray-300">Voice analytics content will be displayed here...</p>
+                </div>
+            </div>
+
+            <div id="user-journey-section" class="dashboard-section" style="display: none;">
+                <h2 class="text-2xl font-bold mb-6">User Journey Analytics</h2>
+                <div class="glass-card p-6">
+                    <p class="text-gray-300">User journey analytics content will be displayed here...</p>
+                </div>
+            </div>
+
+            <div id="performance-section" class="dashboard-section" style="display: none;">
+                <h2 class="text-2xl font-bold mb-6">Performance Monitoring</h2>
+                <div class="glass-card p-6">
+                    <p class="text-gray-300">Performance monitoring content will be displayed here...</p>
+                </div>
+            </div>
+
+            <div id="content-section" class="dashboard-section" style="display: none;">
+                <h2 class="text-2xl font-bold mb-6">Content Analytics</h2>
+                <div class="glass-card p-6">
+                    <p class="text-gray-300">Content analytics will be displayed here...</p>
+                </div>
+            </div>
+
+            <div id="live-monitoring-section" class="dashboard-section" style="display: none;">
+                <h2 class="text-2xl font-bold mb-6">Live Monitoring</h2>
+                <div class="glass-card p-6">
+                    <p class="text-gray-300">Live monitoring content will be displayed here...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dashboard functionality
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from nav items
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionName + '-section').style.display = 'block';
+            
+            // Add active class to clicked nav item
+            event.target.classList.add('active');
+        }
+
+        function refreshData() {
+            // Simulate data refresh
+            console.log('Refreshing dashboard data...');
+            
+            // You would call actual API endpoints here
+            // fetchDashboardData();
+        }
+
+        // Initialize charts
+        function initializeCharts() {
+            // Engagement Trend Chart
+            const engagementCtx = document.getElementById('engagement-chart').getContext('2d');
+            new Chart(engagementCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Daily Active Users',
+                        data: [2100, 2300, 2500, 2400, 2800, 2600, 2847],
+                        borderColor: '#8b5cf6',
+                        backgroundColor: 'rgba(139, 92, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { display: false },
+                        x: { 
+                            display: true,
+                            ticks: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+
+            // Commands Distribution Chart  
+            const commandsCtx = document.getElementById('commands-chart').getContext('2d');
+            new Chart(commandsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Navigation', 'Investigation', 'Conversation', 'Audio Control', 'Other'],
+                    datasets: [{
+                        data: [35, 28, 20, 12, 5],
+                        backgroundColor: [
+                            '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#9ca3af', padding: 20 }
+                        }
+                    }
+                }
+            });
+
+            // Accessibility Usage Chart
+            const accessibilityCtx = document.getElementById('accessibility-usage-chart').getContext('2d');
+            new Chart(accessibilityCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Screen Reader', 'Voice Only', 'Haptic', 'Audio Desc', 'Spatial Audio'],
+                    datasets: [{
+                        data: [1200, 2100, 800, 600, 2500],
+                        backgroundColor: '#10b981',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { 
+                            display: true,
+                            ticks: { color: '#9ca3af' }
+                        },
+                        x: { 
+                            display: true,
+                            ticks: { color: '#9ca3af' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Simulate real-time updates
+        function simulateRealTimeUpdates() {
+            setInterval(() => {
+                // Update metrics with slight variations
+                const dailyUsers = document.getElementById('daily-users');
+                const currentValue = parseInt(dailyUsers.textContent.replace(',', ''));
+                const variation = Math.floor(Math.random() * 20) - 10; // +/- 10
+                dailyUsers.textContent = (currentValue + variation).toLocaleString();
+            }, 5000);
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            simulateRealTimeUpdates();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,102 @@
+{
+  "expo": {
+    "name": "AudioVR Detective",
+    "slug": "audiovr-detective",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#1a1a2e",
+    "primaryColor": "#6c5ce7",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a1a2e"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.audiovr.detective",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "AudioVR uses your microphone for voice commands and conversation interaction in detective mystery games.",
+        "NSSpeechRecognitionUsageDescription": "AudioVR uses speech recognition to process your voice commands for hands-free navigation and gameplay.",
+        "NSLocationWhenInUseUsageDescription": "AudioVR may use your location for immersive audio experiences.",
+        "UIBackgroundModes": ["audio"],
+        "AVAudioSessionCategoryPlayAndRecord": true,
+        "UIRequiredDeviceCapabilities": ["microphone"]
+      },
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1a1a2e"
+      },
+      "package": "com.audiovr.detective",
+      "versionCode": 1,
+      "permissions": [
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.VIBRATE",
+        "android.permission.WAKE_LOCK"
+      ],
+      "config": {
+        "googleServicesFile": "./google-services.json"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      [
+        "expo-av",
+        {
+          "microphonePermission": "Allow AudioVR to access your microphone for voice commands and conversation interaction."
+        }
+      ],
+      [
+        "expo-font",
+        {
+          "fonts": ["./assets/fonts/custom-font.ttf"]
+        }
+      ],
+      "expo-linear-gradient",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "buildToolsVersion": "34.0.0"
+          },
+          "ios": {
+            "deploymentTarget": "13.0"
+          }
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "audiovr-detective-2024"
+      },
+      "apiUrl": "https://audiovr.pages.dev"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0,
+      "url": "https://u.expo.dev/audiovr-detective-2024"
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "scheme": "audiovr"
+  }
+}

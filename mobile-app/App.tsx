@@ -1,94 +1,129 @@
-import React, { useState, useEffect } from 'react';
-import { StatusBar, Alert } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  StatusBar,
+  Alert,
+  AccessibilityInfo,
+  AppState,
+  AppStateStatus,
+} from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as SplashScreen from 'expo-splash-screen';
+import * as Font from 'expo-font';
+
+// Services
+import AudioVRVoiceService from './services/VoiceService';
+import AudioAssetManager from './services/AudioAssetManager';
 
 // Screens
 import { CaseDetailScreen } from './screens/CaseDetailScreen';
 import { WorldSelectionScreen } from './screens/WorldSelectionScreen';
 import { ActiveInvestigationScreen } from './screens/ActiveInvestigationScreen';
 
-// Services
-import { AudioVRVoiceService, createVoiceService, defaultVoiceConfig } from './services/VoiceService';
-
 // Types
-import { GameWorld, DetectiveCase, Character, Evidence, GameState, AccessibilitySettings } from './types';
+import { 
+  DetectiveCase, 
+  GameWorld, 
+  Character, 
+  GameState, 
+  AccessibilitySettings,
+  VoiceCommand 
+} from './types';
 
-// Mock data for demonstration
-const mockWorlds: GameWorld[] = [
+// Design System
+import { Colors } from './components/DesignSystem';
+
+// Keep splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
+
+const Stack = createStackNavigator();
+
+// Sample data for demo
+const sampleWorlds: GameWorld[] = [
   {
     id: 'victorian-london',
     name: 'Victorian London',
-    description: 'Step into the fog-shrouded streets of 1890s London, where gaslight flickers through the mist and danger lurks in every shadow.',
+    description: 'Explore the foggy streets of 1890s London, where gaslight flickers and mysteries lurk in every shadow.',
     difficulty: 4,
     estimatedDuration: 45,
-    backgroundImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800',
-    ambientSound: 'victorian-london-ambient.mp3',
-    availableCases: 8,
+    backgroundImage: 'https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=800&h=600&fit=crop',
+    ambientSound: 'victorian-ambient.mp3',
+    availableCases: 5,
     isUnlocked: true,
   },
   {
     id: 'modern-tokyo',
     name: 'Modern Tokyo',
-    description: 'Navigate the neon-lit streets of contemporary Tokyo, where traditional mystery meets cutting-edge technology.',
+    description: 'Navigate the neon-lit streets of contemporary Tokyo, where technology meets traditional mystery.',
     difficulty: 3,
     estimatedDuration: 35,
-    backgroundImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800',
-    ambientSound: 'tokyo-night-ambient.mp3',
-    availableCases: 6,
+    backgroundImage: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=800&h=600&fit=crop',
+    ambientSound: 'tokyo-ambient.mp3',
+    availableCases: 4,
     isUnlocked: true,
   },
   {
-    id: 'space-station-omega',
+    id: 'space-station',
     name: 'Space Station Omega',
-    description: 'Solve mysteries in the depths of space aboard a research station where isolation breeds paranoia and secrets.',
+    description: 'Investigate mysteries aboard a futuristic space station, where every room holds deadly secrets.',
     difficulty: 5,
     estimatedDuration: 60,
-    backgroundImage: 'https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=800',
-    ambientSound: 'space-station-ambient.mp3',
-    availableCases: 4,
+    backgroundImage: 'https://images.unsplash.com/photo-1446776877081-d282a0f896e2?w=800&h=600&fit=crop',
+    ambientSound: 'space-ambient.mp3',
+    availableCases: 3,
     isUnlocked: false,
   },
 ];
 
-const mockCase: DetectiveCase = {
+const sampleCase: DetectiveCase = {
   id: 'whitechapel-mystery',
   title: 'The Whitechapel Mystery',
   worldId: 'victorian-london',
-  description: 'A series of brutal murders has terrorized the East End. As Inspector Frederick Abberline, you must navigate the treacherous streets of Whitechapel to catch the killer before they strike again. Use your wit, intuition, and the latest forensic techniques of the era.',
+  description: 'A gruesome murder has shaken the foggy streets of Whitechapel. As detective inspector, you must uncover the truth behind this heinous crime before the killer strikes again.',
   difficulty: 4,
   estimatedDuration: 45,
   currentChapter: 2,
   totalChapters: 5,
-  backgroundImage: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800',
+  backgroundImage: 'https://images.unsplash.com/photo-1533929736458-ca588d08c8be?w=800&h=600&fit=crop',
   characters: [
     {
       id: 'sherlock-holmes',
       name: 'Sherlock Holmes',
       role: 'Consulting Detective',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200',
+      avatar: 'https://via.placeholder.com/120x120/6c5ce7/FFFFFF?text=SH',
       voiceActor: 'Benedict Cumberbatch',
-      description: 'The world\'s greatest consulting detective',
+      description: 'The world\'s only consulting detective',
       isAlive: true,
       suspicionLevel: 0,
     },
     {
-      id: 'dr-watson',
-      name: 'Dr. John Watson',
-      role: 'Medical Examiner',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=200',
-      voiceActor: 'Martin Freeman',
-      description: 'Holmes\' trusted companion and medical expert',
+      id: 'inspector-lestrade',
+      name: 'Inspector Lestrade',
+      role: 'Scotland Yard Inspector',
+      avatar: 'https://via.placeholder.com/120x120/e17055/FFFFFF?text=IL',
+      voiceActor: 'Rupert Graves',
+      description: 'A dedicated but often frustrated police inspector',
       isAlive: true,
-      suspicionLevel: 0,
+      suspicionLevel: 10,
+    },
+    {
+      id: 'mary-kelly',
+      name: 'Mary Kelly',
+      role: 'Local Resident',
+      avatar: 'https://via.placeholder.com/120x120/00b894/FFFFFF?text=MK',
+      voiceActor: 'Keira Knightley',
+      description: 'A witness to strange events in the neighborhood',
+      isAlive: true,
+      suspicionLevel: 30,
     },
   ],
   evidence: [
     {
       id: 'bloody-knife',
       name: 'Bloody Knife',
-      description: 'A sharp kitchen knife with dried blood',
+      description: 'A sharp knife found at the scene, covered in blood',
       type: 'physical',
       foundAt: 'Crime Scene',
       isKey: true,
@@ -96,10 +131,18 @@ const mockCase: DetectiveCase = {
     {
       id: 'witness-testimony',
       name: 'Witness Testimony',
-      description: 'Statement from a local shopkeeper',
+      description: 'A statement from Mary Kelly about suspicious activities',
       type: 'testimony',
-      foundAt: 'Dorset Street',
+      foundAt: 'Interview Room',
       isKey: false,
+    },
+    {
+      id: 'threatening-letter',
+      name: 'Threatening Letter',
+      description: 'An anonymous letter threatening the victim',
+      type: 'document',
+      foundAt: 'Victim\'s Home',
+      isKey: true,
     },
   ],
   progress: 40,
@@ -107,193 +150,318 @@ const mockCase: DetectiveCase = {
   lastPlayedAt: new Date(),
 };
 
-type RootStackParamList = {
-  WorldSelection: undefined;
-  CaseDetail: { case: DetectiveCase };
-  ActiveInvestigation: { case: DetectiveCase };
-};
-
-const Stack = createStackNavigator<RootStackParamList>();
-
 export default function App() {
-  // Voice service state
-  const [voiceService, setVoiceService] = useState<AudioVRVoiceService | null>(null);
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  // Core app state
+  const [isAppReady, setIsAppReady] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState<'world-selection' | 'case-detail' | 'active-investigation'>('world-selection');
+  
+  // Services
+  const [voiceService] = useState(() => new AudioVRVoiceService());
+  const [audioManager] = useState(() => new AudioAssetManager());
   
   // Game state
-  const [currentWorld, setCurrentWorld] = useState<GameWorld | null>(null);
-  const [currentCase, setCurrentCase] = useState<DetectiveCase | null>(null);
   const [gameState, setGameState] = useState<GameState>({
     currentWorld: undefined,
     currentCase: undefined,
-    currentLocation: undefined,
-    activeCharacters: [],
-    availableEvidence: [],
+    currentLocation: 'Baker Street - Holmes\' Study',
+    activeCharacters: ['sherlock-holmes'],
+    availableEvidence: ['bloody-knife', 'witness-testimony'],
     gamePhase: 'menu',
     playerProgress: 0,
   });
-
+  
+  // Voice and audio state
+  const [isRecording, setIsRecording] = useState(false);
+  const [conversationActive, setConversationActive] = useState(false);
+  const [currentObjective, setCurrentObjective] = useState('Question Holmes about the missing evidence');
+  const [audioWaveform, setAudioWaveform] = useState<number[]>([]);
+  
   // Accessibility settings
   const [accessibilitySettings, setAccessibilitySettings] = useState<AccessibilitySettings>({
     voiceNavigationEnabled: true,
-    screenReaderOptimized: true,
+    screenReaderOptimized: false,
     highContrastMode: false,
     largeTextMode: false,
     reduceMotion: false,
     spatialAudioEnabled: true,
     hapticFeedbackEnabled: true,
-    voiceCommandSensitivity: 70,
+    voiceCommandSensitivity: 80,
   });
 
-  // Initialize voice service
+  // Initialize app
   useEffect(() => {
-    if (isVoiceEnabled) {
-      const config = {
-        ...defaultVoiceConfig,
-        accessibilitySettings,
-      };
-      
-      const service = createVoiceService(config);
-      setVoiceService(service);
-      
-      // Start wake word detection
-      service.startWakeWordDetection().catch(error => {
-        console.error('Failed to start wake word detection:', error);
-        Alert.alert(
-          'Voice Recognition Error',
-          'Unable to start voice recognition. Please check microphone permissions.',
-          [{ text: 'OK' }]
-        );
-      });
+    async function prepare() {
+      try {
+        // Load custom fonts if any
+        // await Font.loadAsync({
+        //   'CustomFont': require('./assets/fonts/CustomFont.ttf'),
+        // });
 
-      return () => {
-        service.cleanup();
-      };
+        // Initialize services
+        await voiceService.initialize();
+        await audioManager.initialize();
+
+        // Set up voice service callbacks
+        voiceService.setEventCallbacks({
+          onVoiceResult: handleVoiceResult,
+          onCommandRecognized: handleVoiceCommand,
+          onError: handleVoiceError,
+          onListeningStateChange: setIsRecording,
+        });
+
+        // Set up audio manager callbacks
+        audioManager.setEventCallbacks({
+          onAssetLoaded: handleAudioLoaded,
+          onAssetError: handleAudioError,
+          onDownloadProgress: handleDownloadProgress,
+        });
+
+        // Update voice service with initial settings
+        voiceService.updateAccessibilitySettings(accessibilitySettings);
+        voiceService.updateGameState(gameState);
+
+        // Check screen reader status
+        const screenReaderEnabled = await AccessibilityInfo.isScreenReaderEnabled();
+        if (screenReaderEnabled) {
+          setAccessibilitySettings(prev => ({
+            ...prev,
+            screenReaderOptimized: true,
+          }));
+        }
+
+        // Listen for app state changes
+        const handleAppStateChange = (nextAppState: AppStateStatus) => {
+          if (nextAppState === 'background') {
+            voiceService.stopListening().catch(console.error);
+          }
+        };
+
+        const appStateSubscription = AppState.addEventListener('change', handleAppStateChange);
+
+        setIsAppReady(true);
+
+        return () => {
+          appStateSubscription?.remove();
+        };
+      } catch (error) {
+        console.error('Failed to initialize app:', error);
+        Alert.alert('Initialization Error', 'Failed to initialize AudioVR. Please restart the app.');
+      }
     }
-  }, [isVoiceEnabled, accessibilitySettings]);
 
-  // Update voice service context when game state changes
+    prepare();
+
+    return () => {
+      // Cleanup on unmount
+      voiceService.cleanup().catch(console.error);
+      audioManager.cleanup().catch(console.error);
+    };
+  }, []);
+
+  // Hide splash screen when ready
   useEffect(() => {
-    if (voiceService) {
-      voiceService.updateContext(gameState);
+    if (isAppReady) {
+      SplashScreen.hideAsync();
     }
-  }, [voiceService, gameState]);
+  }, [isAppReady]);
 
-  // Handle voice commands
-  const handleVoiceCommand = async (command: string) => {
-    console.log('Voice command received:', command);
+  // Voice recognition handlers
+  const handleVoiceResult = useCallback((result: any) => {
+    console.log('Voice result:', result.text);
+    // Update waveform visualization
+    setAudioWaveform(Array(20).fill(0).map(() => Math.random()));
+  }, []);
+
+  const handleVoiceCommand = useCallback((commandResult: any) => {
+    console.log('Voice command recognized:', commandResult);
     
-    // Process command based on current screen/context
-    const lowerCommand = command.toLowerCase();
+    const { command, parameters, confidence } = commandResult;
     
-    // Navigation commands
-    if (lowerCommand.includes('back') || lowerCommand.includes('go back')) {
-      // Handle navigation back
+    if (confidence < 0.7) {
+      // Low confidence - ask for clarification
+      AccessibilityInfo.announceForAccessibility(
+        `I'm not sure I understood. Did you mean to ${command.intent}? Please try again.`
+      );
       return;
     }
+
+    // Execute command based on intent
+    executeVoiceCommand(command.intent, parameters);
+  }, []);
+
+  const handleVoiceError = useCallback((error: string) => {
+    console.error('Voice error:', error);
+    setIsRecording(false);
     
-    // Game-specific commands would be handled here
-    // This is a simplified example
-    Alert.alert('Voice Command', `Processed: "${command}"`);
+    AccessibilityInfo.announceForAccessibility(
+      'Voice recognition encountered an error. Please try again.'
+    );
+  }, []);
+
+  // Audio asset handlers
+  const handleAudioLoaded = useCallback((assetId: string) => {
+    console.log('Audio asset loaded:', assetId);
+  }, []);
+
+  const handleAudioError = useCallback((assetId: string, error: string) => {
+    console.error('Audio asset error:', assetId, error);
+  }, []);
+
+  const handleDownloadProgress = useCallback((assetId: string, progress: number) => {
+    console.log(`Download progress for ${assetId}: ${(progress * 100).toFixed(1)}%`);
+  }, []);
+
+  // Execute voice commands
+  const executeVoiceCommand = (intent: string, parameters: Record<string, string>) => {
+    switch (intent) {
+      case 'navigate':
+        if (parameters.location) {
+          setGameState(prev => ({
+            ...prev,
+            currentLocation: parameters.location,
+          }));
+          AccessibilityInfo.announceForAccessibility(`Moving to ${parameters.location}`);
+        }
+        break;
+
+      case 'examine':
+        if (parameters.object) {
+          AccessibilityInfo.announceForAccessibility(`Examining ${parameters.object}`);
+          // Trigger examination logic
+        }
+        break;
+
+      case 'question':
+        if (parameters.character) {
+          setConversationActive(true);
+          AccessibilityInfo.announceForAccessibility(`Questioning ${parameters.character}`);
+        }
+        break;
+
+      case 'help':
+        AccessibilityInfo.announceForAccessibility(
+          'Available commands: examine objects, question characters, move to locations, or say help for more options.'
+        );
+        break;
+
+      case 'pause':
+        // Pause game logic
+        AccessibilityInfo.announceForAccessibility('Game paused');
+        break;
+
+      case 'volume_up':
+      case 'volume_down':
+        const direction = intent === 'volume_up' ? 1 : -1;
+        const audioType = parameters.audio_type || 'master';
+        // Adjust volume logic
+        AccessibilityInfo.announceForAccessibility(
+          `${direction > 0 ? 'Increased' : 'Decreased'} ${audioType} volume`
+        );
+        break;
+
+      default:
+        console.log('Unhandled voice command:', intent, parameters);
+    }
   };
 
-  // Screen navigation handlers
+  // Navigation handlers
+  const handleBackNavigation = () => {
+    switch (currentScreen) {
+      case 'case-detail':
+        setCurrentScreen('world-selection');
+        break;
+      case 'active-investigation':
+        setCurrentScreen('case-detail');
+        break;
+      default:
+        // Handle app exit or main menu
+        break;
+    }
+  };
+
   const handleSelectWorld = (world: GameWorld) => {
-    setCurrentWorld(world);
-    setGameState(prev => ({
-      ...prev,
-      currentWorld: world.id,
-      gamePhase: 'exploration',
-    }));
+    setGameState(prev => ({ ...prev, currentWorld: world.id }));
+    setCurrentScreen('case-detail');
   };
 
-  const handleStartCase = (caseData: DetectiveCase) => {
-    setCurrentCase(caseData);
-    setGameState(prev => ({
-      ...prev,
-      currentCase: caseData.id,
-      currentLocation: 'Baker Street - Holmes\' Study',
-      activeCharacters: caseData.characters.map(c => c.id),
-      availableEvidence: caseData.evidence.map(e => e.id),
-      gamePhase: 'conversation',
-    }));
+  const handleContinueInvestigation = () => {
+    setGameState(prev => ({ ...prev, gamePhase: 'exploration' }));
+    setCurrentScreen('active-investigation');
   };
 
-  const handlePauseGame = () => {
-    setGameState(prev => ({
-      ...prev,
-      gamePhase: 'menu',
-    }));
+  const handleMicrophonePress = async () => {
+    try {
+      if (isRecording) {
+        await voiceService.stopListening();
+      } else {
+        await voiceService.startListening();
+      }
+    } catch (error) {
+      console.error('Microphone error:', error);
+      handleVoiceError(error instanceof Error ? error.message : 'Microphone error');
+    }
   };
 
-  const handleShowInventory = () => {
-    // Show inventory modal or screen
-    console.log('Show inventory');
+  const handleVoiceCommand = (command: string) => {
+    // Process text-based voice command
+    console.log('Processing voice command:', command);
   };
 
   const handleSettings = () => {
-    // Show settings modal
-    console.log('Show settings');
+    // Open settings modal/screen
+    console.log('Opening settings');
   };
 
+  if (!isAppReady) {
+    return null; // Splash screen is still showing
+  }
+
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a2e" />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+      
       <NavigationContainer>
-        <Stack.Navigator
-          screenOptions={{
-            headerShown: false,
-            cardStyle: { backgroundColor: '#1a1a2e' },
-          }}
-          initialRouteName="WorldSelection"
-        >
-          <Stack.Screen name="WorldSelection">
-            {(props) => (
-              <WorldSelectionScreen
-                {...props}
-                worlds={mockWorlds}
-                onSelectWorld={(world) => {
-                  handleSelectWorld(world);
-                  props.navigation.navigate('CaseDetail', { case: mockCase });
-                }}
-                onGoBack={() => props.navigation.goBack()}
-                onSettings={handleSettings}
-              />
-            )}
-          </Stack.Screen>
-          
-          <Stack.Screen name="CaseDetail">
-            {(props) => (
-              <CaseDetailScreen
-                {...props}
-                case={props.route.params.case}
-                onStartCase={() => {
-                  handleStartCase(props.route.params.case);
-                  props.navigation.navigate('ActiveInvestigation', { case: props.route.params.case });
-                }}
-                onGoBack={() => props.navigation.goBack()}
-                onSettings={handleSettings}
-              />
-            )}
-          </Stack.Screen>
-          
-          <Stack.Screen name="ActiveInvestigation">
-            {(props) => (
-              <ActiveInvestigationScreen
-                {...props}
-                case={props.route.params.case}
-                currentLocation={gameState.currentLocation || 'Baker Street - Holmes\' Study'}
-                activeCharacter={props.route.params.case.characters[0]}
-                gameState={gameState}
-                onVoiceCommand={handleVoiceCommand}
-                onPauseGame={handlePauseGame}
-                onGoBack={() => props.navigation.goBack()}
-                onShowInventory={handleShowInventory}
-              />
-            )}
-          </Stack.Screen>
-        </Stack.Navigator>
+        <View style={{ flex: 1, backgroundColor: Colors.background }}>
+          {currentScreen === 'world-selection' && (
+            <WorldSelectionScreen
+              worlds={sampleWorlds}
+              onBack={handleBackNavigation}
+              onSettings={handleSettings}
+              onSelectWorld={handleSelectWorld}
+              onPreviewWorld={(world) => console.log('Preview world:', world.name)}
+              onVoiceCommand={handleVoiceCommand}
+            />
+          )}
+
+          {currentScreen === 'case-detail' && (
+            <CaseDetailScreen
+              case={sampleCase}
+              onBack={handleBackNavigation}
+              onSettings={handleSettings}
+              onContinueInvestigation={handleContinueInvestigation}
+              onVoiceCommand={handleVoiceCommand}
+            />
+          )}
+
+          {currentScreen === 'active-investigation' && (
+            <ActiveInvestigationScreen
+              case={sampleCase}
+              gameState={gameState}
+              currentCharacter={sampleCase.characters[0]}
+              onBack={handleBackNavigation}
+              onPause={() => console.log('Pause investigation')}
+              onVoiceInput={(input) => console.log('Voice input:', input)}
+              onMicrophonePress={handleMicrophonePress}
+              onSkip={() => console.log('Skip dialogue')}
+              onInventory={() => console.log('Open inventory')}
+              isRecording={isRecording}
+              conversationActive={conversationActive}
+              currentObjective={currentObjective}
+              audioWaveform={audioWaveform}
+            />
+          )}
+        </View>
       </NavigationContainer>
-    </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR - Interactive Mobile Prototypes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .phone-frame {
+            width: 375px;
+            height: 812px;
+            background: #000;
+            border-radius: 40px;
+            padding: 8px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 32px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 30px;
+            background: #000;
+            border-radius: 0 0 15px 15px;
+            z-index: 10;
+        }
+        
+        .world-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(20px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .world-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .world-card.active {
+            background: rgba(139, 69, 19, 0.2);
+            border-color: rgba(139, 69, 19, 0.4);
+        }
+        
+        .voice-indicator {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        
+        .listening {
+            animation: listening 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes listening {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
+        }
+        
+        .screen {
+            display: none;
+        }
+        
+        .screen.active {
+            display: block;
+        }
+        
+        .evidence-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+        
+        .evidence-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .evidence-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .character-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 12px;
+            font-size: 32px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 p-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-white mb-4">
+                <i class="fas fa-headphones mr-3 text-purple-400"></i>
+                AudioVR Mobile Prototypes
+            </h1>
+            <p class="text-gray-300 text-lg">Interactive mockups of the voice-driven detective mystery platform</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="text-center mb-8">
+            <div class="inline-flex bg-black/20 rounded-lg p-2">
+                <button onclick="showScreen('world-selection')" 
+                        class="px-6 py-3 rounded-lg text-white transition-all screen-btn"
+                        data-screen="world-selection">
+                    <i class="fas fa-globe mr-2"></i>World Selection
+                </button>
+                <button onclick="showScreen('case-detail')" 
+                        class="px-6 py-3 rounded-lg text-white transition-all screen-btn"
+                        data-screen="case-detail">
+                    <i class="fas fa-scroll mr-2"></i>Case Detail
+                </button>
+                <button onclick="showScreen('investigation')" 
+                        class="px-6 py-3 rounded-lg text-white transition-all screen-btn"
+                        data-screen="investigation">
+                    <i class="fas fa-search mr-2"></i>Investigation
+                </button>
+            </div>
+        </div>
+
+        <!-- Phone Frame -->
+        <div class="flex justify-center">
+            <div class="phone-frame">
+                <div class="phone-screen">
+                    <div class="notch"></div>
+                    
+                    <!-- World Selection Screen -->
+                    <div class="screen active" id="world-selection">
+                        <div class="p-6 pt-12">
+                            <!-- Header -->
+                            <div class="text-center mb-8">
+                                <h2 class="text-2xl font-bold text-white mb-2">Choose Your Mystery</h2>
+                                <p class="text-gray-300">Say "Select [World Name]" or tap to choose</p>
+                            </div>
+
+                            <!-- World Cards -->
+                            <div class="space-y-4">
+                                <!-- Victorian London -->
+                                <div class="world-card p-5" onclick="selectWorld(this, 'Victorian London')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="text-4xl">🏛️</div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-white">Victorian London</h3>
+                                            <p class="text-gray-300 text-sm">Fog-shrouded streets, gaslight mysteries</p>
+                                            <div class="flex items-center mt-2">
+                                                <div class="flex text-yellow-400 text-xs">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                </div>
+                                                <span class="text-gray-400 text-xs ml-2">Intermediate</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-purple-400">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Modern Tokyo -->
+                                <div class="world-card p-5" onclick="selectWorld(this, 'Modern Tokyo')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="text-4xl">🏙️</div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-white">Modern Tokyo</h3>
+                                            <p class="text-gray-300 text-sm">Neon-lit cyberpunk investigations</p>
+                                            <div class="flex items-center mt-2">
+                                                <div class="flex text-yellow-400 text-xs">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                </div>
+                                                <span class="text-gray-400 text-xs ml-2">Beginner</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-purple-400">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Space Station Omega -->
+                                <div class="world-card p-5" onclick="selectWorld(this, 'Space Station Omega')">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="text-4xl">🚀</div>
+                                        <div class="flex-1">
+                                            <h3 class="text-lg font-semibold text-white">Space Station Omega</h3>
+                                            <p class="text-gray-300 text-sm">Zero-gravity crime scenes</p>
+                                            <div class="flex items-center mt-2">
+                                                <div class="flex text-yellow-400 text-xs">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                                <span class="text-gray-400 text-xs ml-2">Expert</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-purple-400">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status Bar -->
+                            <div class="mt-8 text-center">
+                                <p class="text-gray-400 text-sm">
+                                    <i class="fas fa-microphone mr-2"></i>
+                                    "Select Victorian London" - Try voice command
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Voice Indicator -->
+                        <div class="voice-indicator" onclick="toggleListening()">
+                            <i class="fas fa-microphone text-white text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Case Detail Screen -->
+                    <div class="screen" id="case-detail">
+                        <div class="p-6 pt-12">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between mb-6">
+                                <button onclick="showScreen('world-selection')" class="text-purple-400">
+                                    <i class="fas fa-arrow-left text-xl"></i>
+                                </button>
+                                <h2 class="text-xl font-bold text-white">The Whitechapel Mystery</h2>
+                                <button class="text-purple-400">
+                                    <i class="fas fa-bookmark text-xl"></i>
+                                </button>
+                            </div>
+
+                            <!-- Case Info -->
+                            <div class="world-card p-5 mb-6">
+                                <div class="text-center">
+                                    <div class="character-avatar">
+                                        🕵️
+                                    </div>
+                                    <h3 class="text-lg font-semibold text-white mb-2">Inspector Bradshaw</h3>
+                                    <p class="text-gray-300 text-sm mb-4">
+                                        "A gruesome murder in the foggy streets of Whitechapel. 
+                                        The killer left behind cryptic clues..."
+                                    </p>
+                                    
+                                    <div class="flex justify-between items-center text-sm">
+                                        <span class="text-gray-400">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            45 minutes
+                                        </span>
+                                        <span class="text-gray-400">
+                                            <i class="fas fa-users mr-1"></i>
+                                            4 characters
+                                        </span>
+                                        <span class="text-gray-400">
+                                            <i class="fas fa-puzzle-piece mr-1"></i>
+                                            8 clues
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Progress -->
+                            <div class="mb-6">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-gray-300 text-sm">Progress</span>
+                                    <span class="text-purple-400 text-sm">Chapter 2/5</span>
+                                </div>
+                                <div class="w-full bg-gray-700 rounded-full h-2">
+                                    <div class="bg-purple-400 h-2 rounded-full" style="width: 40%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Characters -->
+                            <div class="mb-6">
+                                <h4 class="text-white font-semibold mb-3">Characters You'll Meet</h4>
+                                <div class="space-y-3">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                                            👮
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-white text-sm font-medium">Inspector Holmes</p>
+                                            <p class="text-gray-400 text-xs">Lead investigator</p>
+                                        </div>
+                                        <button class="text-purple-400" onclick="playCharacterVoice('Holmes')">
+                                            <i class="fas fa-play-circle"></i>
+                                        </button>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-10 h-10 rounded-full bg-red-500 flex items-center justify-center text-white">
+                                            🏃‍♀️
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-white text-sm font-medium">Mary Kelly</p>
+                                            <p class="text-gray-400 text-xs">Key witness</p>
+                                        </div>
+                                        <button class="text-purple-400" onclick="playCharacterVoice('Mary')">
+                                            <i class="fas fa-play-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="space-y-3">
+                                <button onclick="showScreen('investigation')" 
+                                        class="w-full bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-lg font-semibold transition-all">
+                                    <i class="fas fa-play mr-2"></i>
+                                    Continue Investigation
+                                </button>
+                                
+                                <button class="w-full bg-gray-700 hover:bg-gray-600 text-white py-3 rounded-lg transition-all">
+                                    <i class="fas fa-history mr-2"></i>
+                                    Review Evidence
+                                </button>
+                            </div>
+
+                            <!-- Voice Hint -->
+                            <div class="text-center mt-6">
+                                <p class="text-gray-400 text-sm">
+                                    <i class="fas fa-microphone mr-2"></i>
+                                    "Continue investigation" - Voice command
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Voice Indicator -->
+                        <div class="voice-indicator" onclick="toggleListening()">
+                            <i class="fas fa-microphone text-white text-xl"></i>
+                        </div>
+                    </div>
+
+                    <!-- Investigation Screen -->
+                    <div class="screen" id="investigation">
+                        <div class="p-6 pt-12">
+                            <!-- Header -->
+                            <div class="flex items-center justify-between mb-6">
+                                <button onclick="showScreen('case-detail')" class="text-purple-400">
+                                    <i class="fas fa-arrow-left text-xl"></i>
+                                </button>
+                                <h2 class="text-lg font-bold text-white">Crime Scene</h2>
+                                <button class="text-purple-400" onclick="openNotebook()">
+                                    <i class="fas fa-book text-xl"></i>
+                                </button>
+                            </div>
+
+                            <!-- Scene Description -->
+                            <div class="world-card p-4 mb-6">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <div class="text-2xl">🌫️</div>
+                                    <div>
+                                        <h3 class="text-white font-semibold">Whitechapel Alley</h3>
+                                        <p class="text-gray-400 text-sm">Foggy evening, gas lamp flickering</p>
+                                    </div>
+                                </div>
+                                <p class="text-gray-300 text-sm leading-relaxed">
+                                    "The narrow alley is shrouded in thick fog. A gas lamp flickers overhead, 
+                                    casting eerie shadows on the cobblestones. You hear distant footsteps..."
+                                </p>
+                                <button class="mt-3 text-purple-400 text-sm" onclick="repeatDescription()">
+                                    <i class="fas fa-volume-up mr-1"></i>
+                                    Repeat description
+                                </button>
+                            </div>
+
+                            <!-- Evidence Grid -->
+                            <div class="mb-6">
+                                <h4 class="text-white font-semibold mb-3">Interactive Elements</h4>
+                                <div class="evidence-grid">
+                                    <div class="evidence-item" onclick="examineEvidence('knife')">
+                                        <div class="text-2xl mb-2">🔪</div>
+                                        <p class="text-white text-sm font-medium">Bloody Knife</p>
+                                        <p class="text-gray-400 text-xs">Fresh blood</p>
+                                    </div>
+                                    
+                                    <div class="evidence-item" onclick="examineEvidence('footprints')">
+                                        <div class="text-2xl mb-2">👣</div>
+                                        <p class="text-white text-sm font-medium">Footprints</p>
+                                        <p class="text-gray-400 text-xs">Leading west</p>
+                                    </div>
+                                    
+                                    <div class="evidence-item" onclick="examineEvidence('letter')">
+                                        <div class="text-2xl mb-2">📜</div>
+                                        <p class="text-white text-sm font-medium">Torn Letter</p>
+                                        <p class="text-gray-400 text-xs">Partially readable</p>
+                                    </div>
+                                    
+                                    <div class="evidence-item" onclick="examineEvidence('witness')">
+                                        <div class="text-2xl mb-2">👤</div>
+                                        <p class="text-white text-sm font-medium">Witness</p>
+                                        <p class="text-gray-400 text-xs">Mary Kelly</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Audio Controls -->
+                            <div class="world-card p-4 mb-6">
+                                <div class="flex items-center justify-between mb-3">
+                                    <h4 class="text-white font-semibold">Ambient Audio</h4>
+                                    <div class="flex space-x-2">
+                                        <button class="text-purple-400" onclick="toggleAmbient()">
+                                            <i class="fas fa-volume-up"></i>
+                                        </button>
+                                        <button class="text-purple-400" onclick="adjustSpatial()">
+                                            <i class="fas fa-compass"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="flex space-x-2 text-xs">
+                                    <span class="bg-blue-500/20 text-blue-300 px-2 py-1 rounded">Rain</span>
+                                    <span class="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded">Footsteps</span>
+                                    <span class="bg-red-500/20 text-red-300 px-2 py-1 rounded">Wind</span>
+                                </div>
+                            </div>
+
+                            <!-- Voice Commands -->
+                            <div class="text-center">
+                                <p class="text-gray-400 text-sm mb-2">Try voice commands:</p>
+                                <div class="flex flex-wrap gap-2 justify-center">
+                                    <span class="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-xs">
+                                        "Examine the knife"
+                                    </span>
+                                    <span class="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-xs">
+                                        "Talk to Mary"
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Voice Indicator -->
+                        <div class="voice-indicator" onclick="toggleListening()">
+                            <i class="fas fa-microphone text-white text-xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Overview -->
+        <div class="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
+            <div class="bg-black/20 rounded-lg p-6 text-center">
+                <div class="text-4xl mb-4">🎙️</div>
+                <h3 class="text-white font-semibold mb-2">Voice-First Design</h3>
+                <p class="text-gray-300 text-sm">Every interaction accessible via voice commands with 95%+ accuracy</p>
+            </div>
+            
+            <div class="bg-black/20 rounded-lg p-6 text-center">
+                <div class="text-4xl mb-4">🔊</div>
+                <h3 class="text-white font-semibold mb-2">Spatial Audio</h3>
+                <p class="text-gray-300 text-sm">3D positioned sounds create immersive investigation environments</p>
+            </div>
+            
+            <div class="bg-black/20 rounded-lg p-6 text-center">
+                <div class="text-4xl mb-4">♿</div>
+                <h3 class="text-white font-semibold mb-2">Accessibility First</h3>
+                <p class="text-gray-300 text-sm">WCAG 2.1 AA compliant with screen reader optimization</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evidence Modal -->
+    <div id="evidence-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" style="display: none;">
+        <div class="bg-gray-900 rounded-lg p-6 m-4 max-w-sm w-full border border-gray-700">
+            <div class="flex items-center justify-between mb-4">
+                <h3 id="evidence-title" class="text-white font-semibold text-lg"></h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="evidence-content" class="text-gray-300 text-sm mb-4"></div>
+            <div class="flex space-x-3">
+                <button onclick="addToNotebook()" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded transition-all">
+                    <i class="fas fa-plus mr-2"></i>Add to Notes
+                </button>
+                <button onclick="closeModal()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded transition-all">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScreen = 'world-selection';
+        let isListening = false;
+        
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show target screen
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+            
+            // Update button states
+            document.querySelectorAll('.screen-btn').forEach(btn => {
+                btn.classList.remove('bg-purple-600');
+                if (btn.dataset.screen === screenId) {
+                    btn.classList.add('bg-purple-600');
+                }
+            });
+        }
+        
+        function selectWorld(element, worldName) {
+            // Remove active class from all cards
+            document.querySelectorAll('.world-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Add active class to selected card
+            element.classList.add('active');
+            
+            // Simulate voice feedback
+            speak(`${worldName} selected. Loading mystery cases...`);
+            
+            // Navigate to case detail after short delay
+            setTimeout(() => {
+                showScreen('case-detail');
+            }, 1500);
+        }
+        
+        function toggleListening() {
+            const indicator = document.querySelector('.voice-indicator');
+            isListening = !isListening;
+            
+            if (isListening) {
+                indicator.classList.add('listening');
+                indicator.innerHTML = '<i class="fas fa-stop text-white text-xl"></i>';
+                speak('Listening...');
+            } else {
+                indicator.classList.remove('listening');
+                indicator.innerHTML = '<i class="fas fa-microphone text-white text-xl"></i>';
+            }
+        }
+        
+        function examineEvidence(evidenceType) {
+            const evidence = {
+                'knife': {
+                    title: 'Bloody Knife',
+                    content: 'A sharp kitchen knife with fresh blood. The blade shows signs of recent use. You notice an unusual marking on the handle - it appears to be initials: "J.P."'
+                },
+                'footprints': {
+                    title: 'Muddy Footprints', 
+                    content: 'Large boot prints leading west toward the main street. The depth suggests a heavy person, possibly carrying something. The mud appears to be from the docks area.'
+                },
+                'letter': {
+                    title: 'Torn Letter',
+                    content: 'A partially torn letter with elegant handwriting. You can make out: "...meet me at midnight... the usual place... bring the payment..." Signed with an illegible signature.'
+                },
+                'witness': {
+                    title: 'Mary Kelly',
+                    content: 'A nervous young woman who claims to have seen a tall figure fleeing the scene. She speaks with a slight Irish accent and keeps glancing toward the tavern.'
+                }
+            };
+            
+            const modal = document.getElementById('evidence-modal');
+            const title = document.getElementById('evidence-title');
+            const content = document.getElementById('evidence-content');
+            
+            title.textContent = evidence[evidenceType].title;
+            content.textContent = evidence[evidenceType].content;
+            
+            modal.style.display = 'flex';
+            speak(evidence[evidenceType].content);
+        }
+        
+        function closeModal() {
+            document.getElementById('evidence-modal').style.display = 'none';
+        }
+        
+        function addToNotebook() {
+            speak('Evidence added to notebook');
+            closeModal();
+        }
+        
+        function repeatDescription() {
+            speak('The narrow alley is shrouded in thick fog. A gas lamp flickers overhead, casting eerie shadows on the cobblestones. You hear distant footsteps echoing from the main street.');
+        }
+        
+        function playCharacterVoice(character) {
+            const voices = {
+                'Holmes': 'Good evening. I am Inspector Holmes. I shall be guiding you through this investigation.',
+                'Mary': 'Oh dear, it was terrible! I saw a tall figure running away into the fog!'
+            };
+            speak(voices[character] || 'Character voice preview');
+        }
+        
+        function toggleAmbient() {
+            speak('Ambient audio adjusted');
+        }
+        
+        function adjustSpatial() {
+            speak('Spatial audio positioning updated');
+        }
+        
+        function openNotebook() {
+            speak('Opening investigation notebook');
+        }
+        
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 0.9;
+                utterance.pitch = 1;
+                speechSynthesis.speak(utterance);
+            }
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            showScreen('world-selection');
+            
+            // Add keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && document.getElementById('evidence-modal').style.display === 'flex') {
+                    closeModal();
+                }
+            });
+            
+            // Simulate voice recognition (for demo purposes)
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'v' && e.ctrlKey) {
+                    e.preventDefault();
+                    toggleListening();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+# Cloudflare Pages Configuration
+name = "audiovr-web"
+main = "functions/index.js"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages build configuration
+[build]
+command = "npm run build:cloudflare"
+destination = "out"
+
+# Environment variables (use wrangler secret put for sensitive values)
+[vars]
+NEXT_PUBLIC_SUPABASE_URL = ""
+NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
+
+# Production environment variables
+[env.production.vars]
+NEXT_PUBLIC_SUPABASE_URL = ""
+NEXT_PUBLIC_SUPABASE_ANON_KEY = ""
+
+# D1 Database bindings (optional for future use)
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "audiovr-production"
+# database_id = ""
+
+# KV Storage bindings (optional for session storage)
+# [[kv_namespaces]]
+# binding = "KV"
+# id = ""
+# preview_id = ""
+
+# R2 Storage bindings (optional for audio file storage)
+# [[r2_buckets]]
+# binding = "BUCKET"
+# bucket_name = "audiovr-assets"
+
+# Custom routes configuration
+[routes]
+# All API routes handled by functions
+include = ["/api/*"]
+# Static files served directly
+exclude = ["/static/*", "/_next/*", "/favicon.ico"]

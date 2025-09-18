@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR - UI/UX Mockups Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+        }
+        
+        .mockup-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .mockup-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+        
+        .mockup-image {
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+            height: 300px;
+            background: linear-gradient(45deg, #1e293b, #334155);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mockup-preview {
+            max-width: 100%;
+            max-height: 100%;
+            border-radius: 8px;
+            object-fit: contain;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <div class="container mx-auto px-4 py-12">
+        <!-- Header -->
+        <div class="text-center mb-16">
+            <h1 class="text-5xl font-bold mb-6 bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                AudioVR UI/UX Mockups
+            </h1>
+            <p class="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
+                Comprehensive visual mockups showcasing AudioVR's accessibility-first design approach. 
+                Every interface prioritizes voice interaction, spatial audio, and inclusive user experience.
+            </p>
+        </div>
+
+        <!-- Generated Mockups Gallery -->
+        <section class="mb-20">
+            <h2 class="text-3xl font-bold mb-8 text-center">Visual Design Mockups</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                <!-- Home Screen -->
+                <div class="glass-card p-6 mockup-card">
+                    <div class="mockup-image mb-6">
+                        <img src="https://cdn1.genspark.ai/user-upload-image/3_generated/070dcedf-e522-4e07-9652-e1b7267a2164" 
+                             alt="AudioVR Home Screen Mockup" 
+                             class="mockup-preview">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">
+                        <i class="fas fa-home mr-2 text-purple-400"></i>
+                        Home Screen - World Selection
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Voice-driven world selection interface featuring three immersive mystery settings: 
+                        Victorian London, Modern Tokyo, and Space Station Omega. Features large touch targets, 
+                        difficulty indicators, and prominent voice activation button.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-1">
+                        <li>✓ WCAG 2.1 AA compliant colors</li>
+                        <li>✓ Voice command: "Select Victorian London"</li>
+                        <li>✓ Glass morphism accessibility design</li>
+                        <li>✓ High contrast typography</li>
+                    </ul>
+                </div>
+
+                <!-- Case Detail Screen -->
+                <div class="glass-card p-6 mockup-card">
+                    <div class="mockup-image mb-6">
+                        <img src="https://cdn1.genspark.ai/user-upload-image/3_generated/7b2b29bc-b6af-4cfb-8cf4-12009bc8c526" 
+                             alt="AudioVR Case Detail Screen Mockup" 
+                             class="mockup-preview">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">
+                        <i class="fas fa-scroll mr-2 text-blue-400"></i>
+                        Case Detail - The Whitechapel Mystery
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Comprehensive mystery overview with Inspector Bradshaw character introduction, 
+                        progress tracking (Chapter 2/5), character roster with voice samples, 
+                        and clear action buttons for continuing investigation.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-1">
+                        <li>✓ Character avatars with voice previews</li>
+                        <li>✓ Progress visualization with audio cues</li>
+                        <li>✓ 45-minute duration clearly displayed</li>
+                        <li>✓ Voice hint: "Continue investigation"</li>
+                    </ul>
+                </div>
+
+                <!-- Investigation Screen -->
+                <div class="glass-card p-6 mockup-card">
+                    <div class="mockup-image mb-6">
+                        <img src="https://cdn1.genspark.ai/user-upload-image/3_generated/56bcd2d3-8b54-4835-b8c4-2bfe4e3f3fa6" 
+                             alt="AudioVR Investigation Screen Mockup" 
+                             class="mockup-preview">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">
+                        <i class="fas fa-search mr-2 text-green-400"></i>
+                        Active Investigation - Crime Scene
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Interactive Victorian London crime scene with spatial audio positioning. 
+                        Features evidence overlays (bloody knife, footprints, torn letter, witness), 
+                        scene description, and voice command interface with ambient audio controls.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-1">
+                        <li>✓ 3D spatial audio positioning</li>
+                        <li>✓ Interactive evidence with voice commands</li>
+                        <li>✓ Ambient sounds: Rain, Wind, Footsteps</li>
+                        <li>✓ Scene narration with fog atmosphere</li>
+                    </ul>
+                </div>
+
+                <!-- Analytics Dashboard -->
+                <div class="glass-card p-6 mockup-card">
+                    <div class="mockup-image mb-6">
+                        <img src="https://cdn1.genspark.ai/user-upload-image/3_generated/2f4a9c05-a89d-43dc-aa01-a0abc6b877ff" 
+                             alt="AudioVR Analytics Dashboard Mockup" 
+                             class="mockup-preview">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">
+                        <i class="fas fa-chart-line mr-2 text-purple-400"></i>
+                        Analytics Dashboard - Real-time Metrics
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Comprehensive platform analytics with real-time data visualization. 
+                        Displays key metrics: 2,847 daily users, 96.8% voice accuracy, 
+                        94.2% accessibility score, and interactive charts for engagement tracking.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-1">
+                        <li>✓ Live data with real-time indicators</li>
+                        <li>✓ Voice command accuracy tracking</li>
+                        <li>✓ Accessibility compliance monitoring</li>
+                        <li>✓ System health status indicators</li>
+                    </ul>
+                </div>
+
+                <!-- Content Management System -->
+                <div class="glass-card p-6 mockup-card">
+                    <div class="mockup-image mb-6">
+                        <img src="https://cdn1.genspark.ai/user-upload-image/3_generated/11195ad4-abaa-4bb7-845d-ea0f147fd94b" 
+                             alt="AudioVR Content Management System Mockup" 
+                             class="mockup-preview">
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">
+                        <i class="fas fa-tools mr-2 text-yellow-400"></i>
+                        Content Management - Creator Tools
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Professional mystery creation suite with story element editor, 
+                        character management, audio script generation, and built-in 
+                        WCAG accessibility validator with real-time compliance checking.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-1">
+                        <li>✓ Story element creation with audio descriptions</li>
+                        <li>✓ 3D spatial positioning (X,Y,Z coords)</li>
+                        <li>✓ WCAG compliance validator</li>
+                        <li>✓ Mystery outline with scene management</li>
+                    </ul>
+                </div>
+
+                <!-- Interactive Features Summary -->
+                <div class="glass-card p-6 mockup-card">
+                    <div class="mockup-image mb-6 flex flex-col items-center justify-center text-center">
+                        <i class="fas fa-microphone text-6xl text-purple-400 mb-4"></i>
+                        <h4 class="text-xl font-bold text-white">Interactive Features</h4>
+                        <p class="text-gray-300 text-sm mt-2">Voice-First Design</p>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-3">
+                        <i class="fas fa-universal-access mr-2 text-green-400"></i>
+                        Accessibility Excellence
+                    </h3>
+                    <p class="text-gray-300 text-sm mb-4">
+                        Every AudioVR interface element prioritizes accessibility with 
+                        comprehensive voice control, spatial audio positioning, screen reader 
+                        optimization, and WCAG 2.1 AA compliance throughout the platform.
+                    </p>
+                    <ul class="text-xs text-gray-400 space-y-1">
+                        <li>✓ 95%+ voice recognition accuracy</li>
+                        <li>✓ Screen reader compatible</li>
+                        <li>✓ Keyboard navigation support</li>
+                        <li>✓ High contrast & reduced motion modes</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- Design System Overview -->
+        <section class="mb-20">
+            <h2 class="text-3xl font-bold mb-8 text-center">Design System & Technical Implementation</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <!-- Color Palette -->
+                <div class="glass-card p-6 text-center">
+                    <div class="text-4xl mb-4">🎨</div>
+                    <h3 class="text-lg font-semibold mb-3">WCAG Compliant Colors</h3>
+                    <div class="flex justify-center space-x-2 mb-3">
+                        <div class="w-6 h-6 rounded-full bg-purple-600"></div>
+                        <div class="w-6 h-6 rounded-full bg-blue-500"></div>
+                        <div class="w-6 h-6 rounded-full bg-green-500"></div>
+                    </div>
+                    <p class="text-sm text-gray-300">4.5:1 contrast ratio minimum</p>
+                </div>
+
+                <!-- Typography -->
+                <div class="glass-card p-6 text-center">
+                    <div class="text-4xl mb-4">📝</div>
+                    <h3 class="text-lg font-semibold mb-3">Accessible Typography</h3>
+                    <div class="space-y-1 mb-3">
+                        <div class="text-lg font-bold">Inter Font</div>
+                        <div class="text-sm">Optimized Readability</div>
+                    </div>
+                    <p class="text-sm text-gray-300">Screen reader optimized</p>
+                </div>
+
+                <!-- Voice Interface -->
+                <div class="glass-card p-6 text-center">
+                    <div class="text-4xl mb-4">🎙️</div>
+                    <h3 class="text-lg font-semibold mb-3">Voice-First Design</h3>
+                    <div class="text-2xl font-bold text-purple-400 mb-2">95%+</div>
+                    <p class="text-sm text-gray-300">Recognition accuracy with natural language processing</p>
+                </div>
+
+                <!-- Spatial Audio -->
+                <div class="glass-card p-6 text-center">
+                    <div class="text-4xl mb-4">🔊</div>
+                    <h3 class="text-lg font-semibold mb-3">3D Spatial Audio</h3>
+                    <div class="text-sm font-medium mb-2">X, Y, Z Positioning</div>
+                    <p class="text-sm text-gray-300">Immersive navigation assistance</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Stack -->
+        <section class="mb-12">
+            <div class="glass-card p-8">
+                <h2 class="text-3xl font-bold mb-8 text-center">Technical Implementation</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Frontend -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-purple-400">
+                            <i class="fab fa-react mr-2"></i>Frontend Technology
+                        </h3>
+                        <ul class="space-y-2 text-sm text-gray-300">
+                            <li><strong>Next.js 14</strong> - App Router with server components</li>
+                            <li><strong>React Native + Expo</strong> - Cross-platform mobile apps</li>
+                            <li><strong>TypeScript</strong> - Type-safe development</li>
+                            <li><strong>Tailwind CSS</strong> - Utility-first styling</li>
+                            <li><strong>Web Speech API</strong> - Native voice recognition</li>
+                            <li><strong>Web Audio API</strong> - Spatial audio processing</li>
+                        </ul>
+                    </div>
+
+                    <!-- Backend -->
+                    <div>
+                        <h3 class="text-xl font-semibold mb-4 text-blue-400">
+                            <i class="fas fa-server mr-2"></i>Backend & Database
+                        </h3>
+                        <ul class="space-y-2 text-sm text-gray-300">
+                            <li><strong>Supabase PostgreSQL</strong> - Real-time database</li>
+                            <li><strong>Vercel Edge Functions</strong> - Serverless API routes</li>
+                            <li><strong>Row Level Security</strong> - Database-level permissions</li>
+                            <li><strong>Supabase Storage</strong> - Audio asset management</li>
+                            <li><strong>Real-time Subscriptions</strong> - Live data updates</li>
+                            <li><strong>ElevenLabs API</strong> - AI voice synthesis</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="text-center mt-8">
+                    <a href="/demo" class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg font-semibold transition-all transform hover:scale-105">
+                        <i class="fas fa-play mr-2"></i>
+                        Experience AudioVR Demo
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="text-center text-gray-400 text-sm">
+            <p>&copy; 2024 AudioVR Platform. Accessibility-first detective mysteries.</p>
+            <p class="mt-2">
+                <a href="/analytics-dashboard.html" class="hover:text-purple-400 transition-colors">Analytics Dashboard</a> | 
+                <a href="/mobile-prototypes" class="hover:text-purple-400 transition-colors ml-2">Interactive Prototypes</a> |
+                <a href="https://github.com/username/audiovr-web" class="hover:text-purple-400 transition-colors ml-2">GitHub Repository</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // Add click handlers for mockup cards
+        document.querySelectorAll('.mockup-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const img = this.querySelector('img');
+                if (img) {
+                    // Open image in new tab for full view
+                    window.open(img.src, '_blank');
+                }
+            });
+        });
+
+        // Add keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Tab') {
+                // Ensure focus is visible on mockup cards
+                const focusedCard = document.activeElement.closest('.mockup-card');
+                if (focusedCard) {
+                    focusedCard.style.outline = '2px solid #8b5cf6';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

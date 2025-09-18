@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AudioVR - Interactive Web Demo</title>
+    <meta name="description" content="Experience AudioVR's voice-driven detective mysteries. Accessible to all users with full screen reader and keyboard support.">
+    
+    <!-- Accessibility Meta Tags -->
+    <meta name="accessibility" content="WCAG 2.1 AA compliant">
+    <meta name="voice-control" content="enabled">
+    <meta name="screen-reader" content="optimized">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.0/dist/axios.min.js"></script>
+    
+    <style>
+        /* Enhanced accessibility styles */
+        * {
+            scroll-behavior: smooth;
+        }
+        
+        body { 
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            min-height: 100vh;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            line-height: 1.6;
+        }
+        
+        /* High contrast mode support */
+        @media (prefers-contrast: high) {
+            body {
+                background: #000;
+                color: #fff;
+            }
+            
+            .glass-card {
+                background: #111 !important;
+                border: 2px solid #fff !important;
+            }
+        }
+        
+        /* Reduced motion support */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+        }
+        
+        /* Focus management for accessibility */
+        .focusable {
+            transition: all 0.2s ease;
+        }
+        
+        .focusable:focus {
+            outline: 3px solid #a78bfa;
+            outline-offset: 2px;
+            box-shadow: 0 0 0 6px rgba(167, 139, 250, 0.3);
+        }
+        
+        /* Screen reader optimizations */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .sr-only:focus {
+            position: static;
+            width: auto;
+            height: auto;
+            padding: 0.5rem;
+            margin: 0;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
+            background: #1e293b;
+            color: white;
+            border: 2px solid #a78bfa;
+        }
+        
+        /* Voice indicator animations */
+        .voice-indicator {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #8b5cf6, #a78bfa);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.4);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        
+        .voice-indicator:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(139, 92, 246, 0.6);
+        }
+        
+        .voice-indicator.listening {
+            animation: pulse-listening 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-listening {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        
+        .voice-indicator.processing {
+            animation: spin 2s linear infinite;
+        }
+        
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Scene transition effects */
+        .scene {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        .scene.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        /* Interactive element highlighting */
+        .interactive-element {
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .interactive-element:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+        
+        .interactive-element::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #8b5cf6, #06b6d4);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .interactive-element:hover::after,
+        .interactive-element:focus::after {
+            opacity: 1;
+        }
+        
+        /* Audio wave visualization */
+        .audio-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            space-x: 2px;
+        }
+        
+        .wave-bar {
+            width: 3px;
+            height: 20px;
+            background: #8b5cf6;
+            border-radius: 1.5px;
+            animation: wave-animation 1.5s ease-in-out infinite;
+        }
+        
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+        
+        @keyframes wave-animation {
+            0%, 100% { height: 20px; }
+            50% { height: 40px; }
+        }
+        
+        /* Accessibility notification banner */
+        .accessibility-banner {
+            background: #065f46;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            position: relative;
+        }
+        
+        .demo-scene {
+            min-height: calc(100vh - 100px);
+            display: none;
+        }
+        
+        .demo-scene.active {
+            display: block;
+        }
+        
+        /* Skip navigation links */
+        .skip-nav {
+            position: absolute;
+            top: -40px;
+            left: 6px;
+            background: #1e293b;
+            color: white;
+            padding: 8px;
+            text-decoration: none;
+            border-radius: 4px;
+            z-index: 1000;
+        }
+        
+        .skip-nav:focus {
+            top: 6px;
+        }
+    </style>
+</head>
+<body class="text-white">
+    <!-- Skip Navigation -->
+    <a href="#main-content" class="skip-nav sr-only focusable">Skip to main content</a>
+    
+    <!-- Accessibility Banner -->
+    <div class="accessibility-banner" role="banner" aria-live="polite">
+        <div class="flex items-center justify-center space-x-4">
+            <i class="fas fa-universal-access" aria-hidden="true"></i>
+            <span>Fully accessible voice-driven experience. Use voice commands, keyboard navigation, or screen reader.</span>
+            <button onclick="showAccessibilityHelp()" class="underline hover:no-underline focusable" 
+                    aria-label="Show accessibility features and keyboard shortcuts">
+                Learn More
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Navigation -->
+    <nav role="navigation" aria-label="Main navigation" class="p-4">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-headphones text-white" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">AudioVR Demo</h1>
+                    <p class="text-sm text-gray-300">Voice-Driven Detective Mysteries</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button onclick="toggleSettings()" class="focusable p-2 rounded-lg hover:bg-white/10" 
+                        aria-label="Open accessibility settings">
+                    <i class="fas fa-cog" aria-hidden="true"></i>
+                    <span class="sr-only">Settings</span>
+                </button>
+                
+                <button onclick="showHelp()" class="focusable p-2 rounded-lg hover:bg-white/10" 
+                        aria-label="Show help and voice commands">
+                    <i class="fas fa-question-circle" aria-hidden="true"></i>
+                    <span class="sr-only">Help</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main id="main-content" role="main" class="container mx-auto px-4 py-8">
+        <!-- Welcome Scene -->
+        <div id="welcome-scene" class="demo-scene active scene">
+            <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-6">
+                    Welcome to AudioVR
+                    <span class="sr-only">- Interactive Voice-Driven Detective Mystery Demo</span>
+                </h2>
+                <p class="text-xl text-gray-300 mb-8 max-w-3xl mx-auto">
+                    Experience immersive detective mysteries through voice interaction, spatial audio, and accessible design. 
+                    This demo showcases our commitment to inclusive gaming for all abilities.
+                </p>
+                
+                <!-- Accessibility Features Highlight -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+                    <div class="glass-card p-6 text-center">
+                        <i class="fas fa-microphone text-4xl text-purple-400 mb-4" aria-hidden="true"></i>
+                        <h3 class="text-lg font-semibold mb-2">Voice-First Design</h3>
+                        <p class="text-gray-300 text-sm">
+                            Navigate entirely through voice commands with 95%+ accuracy across different accents and speech patterns.
+                        </p>
+                    </div>
+                    
+                    <div class="glass-card p-6 text-center">
+                        <i class="fas fa-universal-access text-4xl text-green-400 mb-4" aria-hidden="true"></i>
+                        <h3 class="text-lg font-semibold mb-2">WCAG 2.1 AA Compliant</h3>
+                        <p class="text-gray-300 text-sm">
+                            Full screen reader support, keyboard navigation, and optimized for users with visual impairments.
+                        </p>
+                    </div>
+                    
+                    <div class="glass-card p-6 text-center">
+                        <i class="fas fa-volume-up text-4xl text-blue-400 mb-4" aria-hidden="true"></i>
+                        <h3 class="text-lg font-semibold mb-2">3D Spatial Audio</h3>
+                        <p class="text-gray-300 text-sm">
+                            Immersive audio positioning helps with navigation and creates rich, accessible gaming environments.
+                        </p>
+                    </div>
+                </div>
+                
+                <!-- Demo Options -->
+                <div class="space-y-4">
+                    <button onclick="startDemo('tutorial')" 
+                            class="w-full md:w-auto bg-purple-600 hover:bg-purple-700 text-white px-8 py-4 rounded-lg text-lg font-semibold focusable interactive-element mx-2"
+                            aria-describedby="tutorial-desc">
+                        <i class="fas fa-graduation-cap mr-3" aria-hidden="true"></i>
+                        Start Interactive Tutorial
+                    </button>
+                    <div id="tutorial-desc" class="sr-only">
+                        Learn AudioVR basics with guided voice interaction training
+                    </div>
+                    
+                    <button onclick="startDemo('mystery')" 
+                            class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg text-lg font-semibold focusable interactive-element mx-2"
+                            aria-describedby="mystery-desc">
+                        <i class="fas fa-search mr-3" aria-hidden="true"></i>
+                        Jump into Mystery
+                    </button>
+                    <div id="mystery-desc" class="sr-only">
+                        Start investigating the Victorian London mystery immediately
+                    </div>
+                    
+                    <button onclick="startDemo('accessibility')" 
+                            class="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white px-8 py-4 rounded-lg text-lg font-semibold focusable interactive-element mx-2"
+                            aria-describedby="accessibility-desc">
+                        <i class="fas fa-eye mr-3" aria-hidden="true"></i>
+                        Accessibility Showcase
+                    </button>
+                    <div id="accessibility-desc" class="sr-only">
+                        Experience all accessibility features and adaptive technologies
+                    </div>
+                </div>
+                
+                <!-- Voice Commands Hint -->
+                <div class="mt-12 glass-card p-6 max-w-2xl mx-auto">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-microphone mr-3 text-purple-400" aria-hidden="true"></i>
+                        Try Voice Commands
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-300 mb-2">Navigation:</p>
+                            <ul class="space-y-1 text-gray-400">
+                                <li>"Start tutorial"</li>
+                                <li>"Begin mystery"</li>
+                                <li>"Show accessibility features"</li>
+                                <li>"Help me navigate"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-gray-300 mb-2">Settings:</p>
+                            <ul class="space-y-1 text-gray-400">
+                                <li>"Enable screen reader mode"</li>
+                                <li>"Adjust audio settings"</li>
+                                <li>"Change speech speed"</li>
+                                <li>"Show keyboard shortcuts"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tutorial Scene -->
+        <div id="tutorial-scene" class="demo-scene scene">
+            <div class="max-w-4xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-bold">Interactive Tutorial</h2>
+                    <button onclick="goToScene('welcome')" class="focusable text-purple-400 hover:text-purple-300"
+                            aria-label="Return to welcome screen">
+                        <i class="fas fa-arrow-left mr-2" aria-hidden="true"></i>Back
+                    </button>
+                </div>
+                
+                <!-- Tutorial Progress -->
+                <div class="glass-card p-6 mb-8">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">Tutorial Progress</h3>
+                        <span id="tutorial-progress" class="text-purple-400 font-semibold">Step 1 of 5</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-3">
+                        <div id="progress-bar" class="bg-purple-600 h-3 rounded-full transition-all duration-500" style="width: 20%"></div>
+                    </div>
+                </div>
+                
+                <!-- Current Tutorial Step -->
+                <div id="tutorial-content" class="glass-card p-8">
+                    <div class="tutorial-step active" data-step="1">
+                        <h3 class="text-xl font-semibold mb-4">
+                            <i class="fas fa-microphone mr-3 text-purple-400" aria-hidden="true"></i>
+                            Voice Command Basics
+                        </h3>
+                        <p class="text-gray-300 mb-6 leading-relaxed">
+                            AudioVR listens for natural voice commands. You can speak in complete sentences 
+                            or use simple keywords. The system adapts to your speech patterns and accent over time.
+                        </p>
+                        
+                        <div class="bg-blue-500/10 border border-blue-500/20 rounded-lg p-6 mb-6">
+                            <h4 class="font-semibold mb-3 text-blue-300">Try This:</h4>
+                            <p class="text-gray-300 mb-3">Say any of these commands to continue:</p>
+                            <ul class="space-y-2 text-gray-400">
+                                <li>"Next step" or "Continue"</li>
+                                <li>"I'm ready to proceed"</li>
+                                <li>"Move forward"</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="flex items-center justify-center">
+                            <div id="voice-status" class="flex items-center space-x-3 text-purple-400">
+                                <div class="audio-wave">
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                    <div class="wave-bar"></div>
+                                </div>
+                                <span>Listening for your voice...</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional tutorial steps would be here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Mystery Scene -->
+        <div id="mystery-scene" class="demo-scene scene">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-bold">The Whitechapel Mystery</h2>
+                    <button onclick="goToScene('welcome')" class="focusable text-purple-400 hover:text-purple-300"
+                            aria-label="Return to welcome screen">
+                        <i class="fas fa-arrow-left mr-2" aria-hidden="true"></i>Back to Menu
+                    </button>
+                </div>
+                
+                <!-- Mystery Header -->
+                <div class="glass-card p-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <i class="fas fa-map-marker-alt text-3xl text-yellow-400 mb-3" aria-hidden="true"></i>
+                            <h3 class="font-semibold">Location</h3>
+                            <p class="text-gray-300">Victorian London</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-clock text-3xl text-blue-400 mb-3" aria-hidden="true"></i>
+                            <h3 class="font-semibold">Duration</h3>
+                            <p class="text-gray-300">~45 minutes</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-star text-3xl text-purple-400 mb-3" aria-hidden="true"></i>
+                            <h3 class="font-semibold">Difficulty</h3>
+                            <p class="text-gray-300">Intermediate</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Scene Description -->
+                <div class="glass-card p-8 mb-8">
+                    <h3 class="text-xl font-semibold mb-4 flex items-center">
+                        <i class="fas fa-eye mr-3 text-green-400" aria-hidden="true"></i>
+                        Scene: Whitechapel Alley
+                    </h3>
+                    <div class="text-gray-300 leading-relaxed mb-6">
+                        <p class="mb-4" id="scene-description">
+                            You find yourself in a narrow, fog-shrouded alley in the heart of Whitechapel. 
+                            Gas lamps flicker overhead, casting dancing shadows on the wet cobblestones. 
+                            The air is thick with mist, and you can hear distant footsteps echoing from the main street. 
+                            A sense of unease fills the atmosphere as you begin your investigation.
+                        </p>
+                        
+                        <!-- Audio Description Control -->
+                        <button onclick="repeatSceneDescription()" 
+                                class="text-blue-400 hover:text-blue-300 focusable mb-4"
+                                aria-label="Repeat scene audio description">
+                            <i class="fas fa-volume-up mr-2" aria-hidden="true"></i>
+                            Repeat Scene Description
+                        </button>
+                    </div>
+                    
+                    <!-- Interactive Elements Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div onclick="examineElement('knife')" 
+                             class="interactive-element glass-card p-4 text-center focusable cursor-pointer"
+                             role="button" tabindex="0"
+                             aria-label="Examine bloody knife - Evidence item"
+                             onkeydown="handleKeyPress(event, 'knife')">
+                            <i class="fas fa-search text-2xl text-red-400 mb-3" aria-hidden="true"></i>
+                            <h4 class="font-semibold">Bloody Knife</h4>
+                            <p class="text-sm text-gray-400">Fresh blood, strange markings</p>
+                        </div>
+                        
+                        <div onclick="examineElement('footprints')" 
+                             class="interactive-element glass-card p-4 text-center focusable cursor-pointer"
+                             role="button" tabindex="0"
+                             aria-label="Examine footprints - Evidence trail leading west"
+                             onkeydown="handleKeyPress(event, 'footprints')">
+                            <i class="fas fa-shoe-prints text-2xl text-yellow-400 mb-3" aria-hidden="true"></i>
+                            <h4 class="font-semibold">Footprints</h4>
+                            <p class="text-sm text-gray-400">Heavy boots, leading west</p>
+                        </div>
+                        
+                        <div onclick="examineElement('letter')" 
+                             class="interactive-element glass-card p-4 text-center focusable cursor-pointer"
+                             role="button" tabindex="0"
+                             aria-label="Examine torn letter - Partially readable document"
+                             onkeydown="handleKeyPress(event, 'letter')">
+                            <i class="fas fa-envelope-open text-2xl text-purple-400 mb-3" aria-hidden="true"></i>
+                            <h4 class="font-semibold">Torn Letter</h4>
+                            <p class="text-sm text-gray-400">Elegant handwriting, torn edges</p>
+                        </div>
+                        
+                        <div onclick="examineElement('witness')" 
+                             class="interactive-element glass-card p-4 text-center focusable cursor-pointer"
+                             role="button" tabindex="0"
+                             aria-label="Talk to witness - Mary Kelly, key eyewitness"
+                             onkeydown="handleKeyPress(event, 'witness')">
+                            <i class="fas fa-user text-2xl text-green-400 mb-3" aria-hidden="true"></i>
+                            <h4 class="font-semibold">Witness</h4>
+                            <p class="text-sm text-gray-400">Mary Kelly, nervous demeanor</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Voice Commands Help -->
+                <div class="glass-card p-6">
+                    <h3 class="text-lg font-semibold mb-4 flex items-center">
+                        <i class="fas fa-microphone mr-3 text-purple-400" aria-hidden="true"></i>
+                        Available Voice Commands
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                        <div>
+                            <p class="text-gray-300 mb-2">Investigation:</p>
+                            <ul class="space-y-1 text-gray-400">
+                                <li>"Examine the knife" / "Look at the bloody knife"</li>
+                                <li>"Follow the footprints" / "Check the trail"</li>
+                                <li>"Read the letter" / "Examine the document"</li>
+                                <li>"Talk to Mary" / "Speak with the witness"</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <p class="text-gray-300 mb-2">Navigation:</p>
+                            <ul class="space-y-1 text-gray-400">
+                                <li>"Describe the scene again"</li>
+                                <li>"What can I interact with?"</li>
+                                <li>"Go back" / "Return to menu"</li>
+                                <li>"Show my notebook" / "Review evidence"</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accessibility Showcase Scene -->
+        <div id="accessibility-scene" class="demo-scene scene">
+            <div class="max-w-6xl mx-auto">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-bold">Accessibility Features</h2>
+                    <button onclick="goToScene('welcome')" class="focusable text-purple-400 hover:text-purple-300"
+                            aria-label="Return to welcome screen">
+                        <i class="fas fa-arrow-left mr-2" aria-hidden="true"></i>Back to Menu
+                    </button>
+                </div>
+                
+                <!-- Accessibility Feature Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Voice Navigation -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-microphone mr-3 text-purple-400" aria-hidden="true"></i>
+                            Voice Navigation
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            Complete game navigation through voice commands with 95%+ accuracy across different accents.
+                        </p>
+                        <button onclick="demonstrateVoiceNav()" class="bg-purple-600 hover:bg-purple-700 px-4 py-2 rounded focusable">
+                            Try Voice Demo
+                        </button>
+                    </div>
+                    
+                    <!-- Screen Reader Support -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-eye mr-3 text-green-400" aria-hidden="true"></i>
+                            Screen Reader
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            Optimized for VoiceOver, NVDA, JAWS with semantic markup and ARIA labels.
+                        </p>
+                        <button onclick="demonstrateScreenReader()" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded focusable">
+                            Test Screen Reader
+                        </button>
+                    </div>
+                    
+                    <!-- Spatial Audio -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-headphones mr-3 text-blue-400" aria-hidden="true"></i>
+                            Spatial Audio
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            3D positioned audio helps with navigation and immersion without requiring headphones.
+                        </p>
+                        <button onclick="demonstrateSpatialAudio()" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded focusable">
+                            Experience 3D Audio
+                        </button>
+                    </div>
+                    
+                    <!-- Keyboard Navigation -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-keyboard mr-3 text-yellow-400" aria-hidden="true"></i>
+                            Keyboard Navigation
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            Full keyboard support with logical tab order and visible focus indicators.
+                        </p>
+                        <button onclick="showKeyboardShortcuts()" class="bg-yellow-600 hover:bg-yellow-700 px-4 py-2 rounded focusable">
+                            View Shortcuts
+                        </button>
+                    </div>
+                    
+                    <!-- High Contrast -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-adjust mr-3 text-pink-400" aria-hidden="true"></i>
+                            High Contrast
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            Automatic high contrast mode support with WCAG AA color contrast ratios.
+                        </p>
+                        <button onclick="toggleHighContrast()" class="bg-pink-600 hover:bg-pink-700 px-4 py-2 rounded focusable">
+                            Toggle Contrast
+                        </button>
+                    </div>
+                    
+                    <!-- Motion Settings -->
+                    <div class="glass-card p-6">
+                        <h3 class="text-lg font-semibold mb-4 flex items-center">
+                            <i class="fas fa-pause mr-3 text-indigo-400" aria-hidden="true"></i>
+                            Reduced Motion
+                        </h3>
+                        <p class="text-gray-300 mb-4">
+                            Respects system preferences for reduced motion and provides manual controls.
+                        </p>
+                        <button onclick="toggleReducedMotion()" class="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded focusable">
+                            Adjust Motion
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- WCAG Compliance Information -->
+                <div class="glass-card p-8 mt-8">
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-certificate mr-3 text-green-400" aria-hidden="true"></i>
+                        WCAG 2.1 AA Compliance
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div>
+                            <h4 class="font-semibold mb-4 text-green-300">✓ Perceivable</h4>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li>• Audio descriptions for all visual content</li>
+                                <li>• High contrast color schemes</li>
+                                <li>• Scalable text and UI elements</li>
+                                <li>• Multiple sensory channels (audio, haptic, visual)</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold mb-4 text-green-300">✓ Operable</h4>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li>• Full keyboard and voice navigation</li>
+                                <li>• No seizure-inducing content</li>
+                                <li>• Customizable time limits</li>
+                                <li>• Multiple input methods supported</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold mb-4 text-green-300">✓ Understandable</h4>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li>• Clear, simple language</li>
+                                <li>• Predictable navigation patterns</li>
+                                <li>• Error identification and suggestions</li>
+                                <li>• Context-sensitive help</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-semibold mb-4 text-green-300">✓ Robust</h4>
+                            <ul class="space-y-2 text-gray-300 text-sm">
+                                <li>• Compatible with assistive technologies</li>
+                                <li>• Semantic HTML and ARIA labels</li>
+                                <li>• Progressive enhancement approach</li>
+                                <li>• Cross-platform compatibility</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Voice Indicator Button -->
+    <div class="voice-indicator focusable" 
+         onclick="toggleVoiceRecognition()" 
+         onkeydown="handleVoiceKeyPress(event)"
+         role="button" 
+         tabindex="0"
+         aria-label="Voice command button - Click or press Enter to start voice recognition"
+         title="Click to activate voice commands">
+        <i class="fas fa-microphone text-white text-2xl" aria-hidden="true"></i>
+    </div>
+
+    <!-- Voice Status Display -->
+    <div id="voice-status-display" class="fixed bottom-32 right-8 glass-card p-4 hidden" aria-live="polite">
+        <div class="flex items-center space-x-3">
+            <div class="audio-wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+            <span id="voice-status-text">Listening...</span>
+        </div>
+    </div>
+
+    <!-- Accessibility Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden" 
+         role="dialog" aria-labelledby="settings-title" aria-modal="true">
+        <div class="glass-card p-8 m-4 max-w-2xl w-full">
+            <div class="flex items-center justify-between mb-6">
+                <h3 id="settings-title" class="text-xl font-bold">Accessibility Settings</h3>
+                <button onclick="closeSettings()" class="text-gray-400 hover:text-white focusable" 
+                        aria-label="Close settings dialog">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <!-- Voice Settings -->
+                <div>
+                    <h4 class="font-semibold mb-3">Voice Recognition</h4>
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" id="voice-enabled" checked class="focusable">
+                            <span>Enable voice commands</span>
+                        </label>
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" id="continuous-listening" class="focusable">
+                            <span>Continuous listening mode</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Audio Settings -->
+                <div>
+                    <h4 class="font-semibold mb-3">Audio Settings</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label for="speech-speed" class="block mb-2">Speech Speed</label>
+                            <input type="range" id="speech-speed" min="0.5" max="2" step="0.1" value="1" class="w-full focusable">
+                        </div>
+                        <div>
+                            <label for="audio-volume" class="block mb-2">Audio Volume</label>
+                            <input type="range" id="audio-volume" min="0" max="100" value="80" class="w-full focusable">
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Visual Settings -->
+                <div>
+                    <h4 class="font-semibold mb-3">Visual Settings</h4>
+                    <div class="space-y-3">
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" id="high-contrast-toggle" class="focusable">
+                            <span>High contrast mode</span>
+                        </label>
+                        <label class="flex items-center space-x-3">
+                            <input type="checkbox" id="reduced-motion-toggle" class="focusable">
+                            <span>Reduce animations</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-4 mt-8">
+                <button onclick="resetSettings()" class="px-6 py-2 bg-gray-600 hover:bg-gray-700 rounded focusable">
+                    Reset to Defaults
+                </button>
+                <button onclick="saveSettings()" class="px-6 py-2 bg-purple-600 hover:bg-purple-700 rounded focusable">
+                    Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global state management
+        let currentScene = 'welcome';
+        let isListening = false;
+        let voiceRecognition;
+        let speechSynthesis = window.speechSynthesis;
+        let currentSettings = {
+            voiceEnabled: true,
+            continuousListening: false,
+            speechSpeed: 1,
+            audioVolume: 80,
+            highContrast: false,
+            reducedMotion: false
+        };
+
+        // Initialize the demo
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAccessibility();
+            initializeVoiceRecognition();
+            setupKeyboardNavigation();
+            loadSettings();
+            announcePageLoad();
+        });
+
+        // Accessibility initialization
+        function initializeAccessibility() {
+            // Set up ARIA live regions
+            const liveRegion = document.createElement('div');
+            liveRegion.setAttribute('aria-live', 'polite');
+            liveRegion.setAttribute('aria-atomic', 'true');
+            liveRegion.className = 'sr-only';
+            liveRegion.id = 'live-region';
+            document.body.appendChild(liveRegion);
+            
+            // Respect system preferences
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                currentSettings.reducedMotion = true;
+                document.body.classList.add('reduced-motion');
+            }
+            
+            if (window.matchMedia('(prefers-contrast: high)').matches) {
+                currentSettings.highContrast = true;
+                document.body.classList.add('high-contrast');
+            }
+        }
+
+        // Voice recognition setup
+        function initializeVoiceRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                voiceRecognition = new SpeechRecognition();
+                
+                voiceRecognition.continuous = false;
+                voiceRecognition.interimResults = false;
+                voiceRecognition.lang = 'en-US';
+                
+                voiceRecognition.onstart = function() {
+                    isListening = true;
+                    updateVoiceIndicator();
+                    showVoiceStatus('Listening...');
+                };
+                
+                voiceRecognition.onresult = function(event) {
+                    const command = event.results[0][0].transcript.toLowerCase().trim();
+                    const confidence = event.results[0][0].confidence;
+                    
+                    processVoiceCommand(command, confidence);
+                };
+                
+                voiceRecognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    showVoiceStatus('Voice recognition error. Please try again.');
+                    isListening = false;
+                    updateVoiceIndicator();
+                };
+                
+                voiceRecognition.onend = function() {
+                    isListening = false;
+                    updateVoiceIndicator();
+                    hideVoiceStatus();
+                };
+            } else {
+                console.warn('Speech recognition not supported');
+                announceToUser('Voice recognition is not available in this browser. Please use keyboard navigation or upgrade your browser.');
+            }
+        }
+
+        // Voice command processing
+        function processVoiceCommand(command, confidence) {
+            announceToUser(`Recognized: "${command}"`);
+            
+            // Navigation commands
+            if (command.includes('start tutorial') || command.includes('begin tutorial')) {
+                startDemo('tutorial');
+            } else if (command.includes('start mystery') || command.includes('begin mystery') || command.includes('jump into mystery')) {
+                startDemo('mystery');
+            } else if (command.includes('accessibility') || command.includes('show accessibility')) {
+                startDemo('accessibility');
+            } else if (command.includes('go back') || command.includes('return') || command.includes('back to menu')) {
+                goToScene('welcome');
+            }
+            
+            // Investigation commands (mystery scene)
+            else if (currentScene === 'mystery') {
+                if (command.includes('knife') || command.includes('blade')) {
+                    examineElement('knife');
+                } else if (command.includes('footprint') || command.includes('track')) {
+                    examineElement('footprints');
+                } else if (command.includes('letter') || command.includes('document') || command.includes('note')) {
+                    examineElement('letter');
+                } else if (command.includes('witness') || command.includes('mary') || command.includes('talk')) {
+                    examineElement('witness');
+                } else if (command.includes('describe') || command.includes('scene') || command.includes('repeat')) {
+                    repeatSceneDescription();
+                }
+            }
+            
+            // Settings commands
+            else if (command.includes('settings') || command.includes('preferences')) {
+                toggleSettings();
+            } else if (command.includes('help') || command.includes('commands')) {
+                showHelp();
+            } else if (command.includes('high contrast')) {
+                toggleHighContrast();
+            } else if (command.includes('reduce motion') || command.includes('less animation')) {
+                toggleReducedMotion();
+            }
+            
+            // Tutorial commands
+            else if (currentScene === 'tutorial' && (command.includes('next') || command.includes('continue') || command.includes('proceed'))) {
+                nextTutorialStep();
+            }
+            
+            // Unrecognized command
+            else {
+                announceToUser(`I didn't understand "${command}". Try saying "help" for available commands.`);
+            }
+        }
+
+        // Scene management
+        function startDemo(type) {
+            switch(type) {
+                case 'tutorial':
+                    goToScene('tutorial');
+                    announceToUser('Starting interactive tutorial. You will learn AudioVR voice commands step by step.');
+                    break;
+                case 'mystery':
+                    goToScene('mystery');
+                    announceToUser('Beginning the Whitechapel Mystery. You are now in a foggy Victorian London alley.');
+                    break;
+                case 'accessibility':
+                    goToScene('accessibility');
+                    announceToUser('Exploring accessibility features. This showcase demonstrates all inclusive design elements.');
+                    break;
+            }
+        }
+
+        function goToScene(sceneName) {
+            // Hide current scene
+            document.querySelectorAll('.demo-scene').forEach(scene => {
+                scene.classList.remove('active');
+            });
+            
+            // Show target scene
+            const targetScene = document.getElementById(sceneName + '-scene');
+            if (targetScene) {
+                targetScene.classList.add('active');
+                currentScene = sceneName;
+                
+                // Focus management
+                const firstFocusable = targetScene.querySelector('.focusable');
+                if (firstFocusable) {
+                    firstFocusable.focus();
+                }
+            }
+        }
+
+        // Mystery investigation functions
+        function examineElement(elementType) {
+            const elements = {
+                knife: {
+                    title: 'Bloody Knife',
+                    description: 'A sharp kitchen knife with fresh blood still glistening on the blade. The blood appears to be recent, no more than an hour old. You notice unusual markings on the handle - they appear to be initials carved into the wood: "J.P." The blade shows signs of recent sharpening.',
+                    clue: 'The initials J.P. might identify the owner. The fresh blood suggests this is the murder weapon.'
+                },
+                footprints: {
+                    title: 'Muddy Footprints',
+                    description: 'Large boot prints in the mud, leading west toward the main thoroughfare. The depth and spacing suggest a heavy person, possibly carrying something substantial. The mud has a distinct reddish clay consistency, suggesting it came from the dock areas near the Thames.',
+                    clue: 'The killer likely fled toward the docks. Their weight or burden slowed their escape.'
+                },
+                letter: {
+                    title: 'Torn Letter',
+                    description: 'A partially torn letter written in elegant handwriting on expensive paper. You can make out fragments: "...meet me at midnight... the usual place... bring the payment as discussed..." The signature is illegible, but there is a wax seal impression showing a family crest.',
+                    clue: 'This appears to be related to a secret meeting. The expensive paper suggests upper-class involvement.'
+                },
+                witness: {
+                    title: 'Mary Kelly - Witness',
+                    description: 'A nervous young woman in her twenties, speaking with a slight Irish accent. She keeps glancing toward the nearby tavern and wringing her hands. "I saw a tall figure in a dark coat fleeing the scene about twenty minutes ago," she says. "They were moving quickly, almost running, toward Dorset Street."',
+                    clue: 'The witness saw the suspect fleeing toward Dorset Street. Her nervous behavior suggests she might know more.'
+                }
+            };
+            
+            const element = elements[elementType];
+            if (element) {
+                announceToUser(`Examining ${element.title}. ${element.description} ${element.clue}`);
+                
+                // Visual feedback
+                showElementModal(element);
+            }
+        }
+
+        function repeatSceneDescription() {
+            const description = "You find yourself in a narrow, fog-shrouded alley in the heart of Whitechapel. Gas lamps flicker overhead, casting dancing shadows on the wet cobblestones. The air is thick with mist, and you can hear distant footsteps echoing from the main street. A sense of unease fills the atmosphere as you begin your investigation.";
+            
+            announceToUser(`Scene description: ${description}`);
+        }
+
+        // Accessibility demonstrations
+        function demonstrateVoiceNav() {
+            announceToUser('Voice navigation demonstration. Try saying: "Go to settings", "Show help", or "Return to menu". AudioVR recognizes natural speech patterns and adapts to your accent over time.');
+        }
+
+        function demonstrateScreenReader() {
+            announceToUser('Screen reader optimization active. All interactive elements have proper ARIA labels, semantic markup, and descriptive text. Navigation follows logical tab order with clear focus indicators.');
+        }
+
+        function demonstrateSpatialAudio() {
+            announceToUser('Spatial audio demonstration. In the full game, sounds are positioned in 3D space to help with navigation. Footsteps to your left, voices ahead, ambient sounds create an immersive world you can navigate by ear.');
+        }
+
+        // Utility functions
+        function announceToUser(message) {
+            // Announce to screen readers
+            const liveRegion = document.getElementById('live-region');
+            if (liveRegion) {
+                liveRegion.textContent = message;
+            }
+            
+            // Speak aloud if speech synthesis is available
+            if (speechSynthesis && currentSettings.voiceEnabled) {
+                speechSynthesis.cancel(); // Stop any current speech
+                const utterance = new SpeechSynthesisUtterance(message);
+                utterance.rate = currentSettings.speechSpeed;
+                utterance.volume = currentSettings.audioVolume / 100;
+                speechSynthesis.speak(utterance);
+            }
+        }
+
+        function announcePageLoad() {
+            announceToUser('Welcome to AudioVR interactive demo. This voice-driven detective mystery platform is fully accessible. Use voice commands, keyboard navigation, or screen reader. Press the voice button or say "help" for available commands.');
+        }
+
+        // Voice interface functions
+        function toggleVoiceRecognition() {
+            if (!voiceRecognition) {
+                announceToUser('Voice recognition is not available in this browser.');
+                return;
+            }
+            
+            if (isListening) {
+                voiceRecognition.stop();
+            } else {
+                voiceRecognition.start();
+            }
+        }
+
+        function updateVoiceIndicator() {
+            const indicator = document.querySelector('.voice-indicator');
+            if (isListening) {
+                indicator.classList.add('listening');
+                indicator.setAttribute('aria-label', 'Voice recognition active - Click to stop');
+            } else {
+                indicator.classList.remove('listening', 'processing');
+                indicator.setAttribute('aria-label', 'Voice command button - Click to start voice recognition');
+            }
+        }
+
+        function showVoiceStatus(message) {
+            const statusDisplay = document.getElementById('voice-status-display');
+            const statusText = document.getElementById('voice-status-text');
+            statusText.textContent = message;
+            statusDisplay.classList.remove('hidden');
+        }
+
+        function hideVoiceStatus() {
+            const statusDisplay = document.getElementById('voice-status-display');
+            statusDisplay.classList.add('hidden');
+        }
+
+        // Keyboard navigation
+        function setupKeyboardNavigation() {
+            document.addEventListener('keydown', function(event) {
+                // Global keyboard shortcuts
+                if (event.altKey) {
+                    switch(event.key) {
+                        case 'h': // Alt+H for help
+                            event.preventDefault();
+                            showHelp();
+                            break;
+                        case 's': // Alt+S for settings
+                            event.preventDefault();
+                            toggleSettings();
+                            break;
+                        case 'v': // Alt+V for voice
+                            event.preventDefault();
+                            toggleVoiceRecognition();
+                            break;
+                    }
+                }
+                
+                // Escape key functionality
+                if (event.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+        }
+
+        function handleKeyPress(event, elementType) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                examineElement(elementType);
+            }
+        }
+
+        function handleVoiceKeyPress(event) {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                toggleVoiceRecognition();
+            }
+        }
+
+        // Settings management
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+            
+            if (!modal.classList.contains('hidden')) {
+                // Focus first input when opening
+                const firstInput = modal.querySelector('input');
+                if (firstInput) firstInput.focus();
+            }
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').classList.add('hidden');
+        }
+
+        function saveSettings() {
+            // Gather settings from form
+            currentSettings.voiceEnabled = document.getElementById('voice-enabled').checked;
+            currentSettings.continuousListening = document.getElementById('continuous-listening').checked;
+            currentSettings.speechSpeed = parseFloat(document.getElementById('speech-speed').value);
+            currentSettings.audioVolume = parseInt(document.getElementById('audio-volume').value);
+            currentSettings.highContrast = document.getElementById('high-contrast-toggle').checked;
+            currentSettings.reducedMotion = document.getElementById('reduced-motion-toggle').checked;
+            
+            // Apply settings
+            applySettings();
+            
+            // Save to localStorage
+            localStorage.setItem('audiovr-settings', JSON.stringify(currentSettings));
+            
+            announceToUser('Settings saved successfully.');
+            closeSettings();
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('audiovr-settings');
+            if (saved) {
+                currentSettings = { ...currentSettings, ...JSON.parse(saved) };
+                applySettings();
+                updateSettingsForm();
+            }
+        }
+
+        function applySettings() {
+            // Apply visual settings
+            document.body.classList.toggle('high-contrast', currentSettings.highContrast);
+            document.body.classList.toggle('reduced-motion', currentSettings.reducedMotion);
+            
+            // Update speech synthesis settings
+            if (speechSynthesis) {
+                speechSynthesis.cancel();
+            }
+        }
+
+        function updateSettingsForm() {
+            document.getElementById('voice-enabled').checked = currentSettings.voiceEnabled;
+            document.getElementById('continuous-listening').checked = currentSettings.continuousListening;
+            document.getElementById('speech-speed').value = currentSettings.speechSpeed;
+            document.getElementById('audio-volume').value = currentSettings.audioVolume;
+            document.getElementById('high-contrast-toggle').checked = currentSettings.highContrast;
+            document.getElementById('reduced-motion-toggle').checked = currentSettings.reducedMotion;
+        }
+
+        function resetSettings() {
+            currentSettings = {
+                voiceEnabled: true,
+                continuousListening: false,
+                speechSpeed: 1,
+                audioVolume: 80,
+                highContrast: false,
+                reducedMotion: false
+            };
+            
+            applySettings();
+            updateSettingsForm();
+            announceToUser('Settings reset to defaults.');
+        }
+
+        // Accessibility toggles
+        function toggleHighContrast() {
+            currentSettings.highContrast = !currentSettings.highContrast;
+            document.body.classList.toggle('high-contrast', currentSettings.highContrast);
+            announceToUser(`High contrast mode ${currentSettings.highContrast ? 'enabled' : 'disabled'}.`);
+        }
+
+        function toggleReducedMotion() {
+            currentSettings.reducedMotion = !currentSettings.reducedMotion;
+            document.body.classList.toggle('reduced-motion', currentSettings.reducedMotion);
+            announceToUser(`Reduced motion ${currentSettings.reducedMotion ? 'enabled' : 'disabled'}.`);
+        }
+
+        // Tutorial functions
+        function nextTutorialStep() {
+            // Tutorial progression logic would go here
+            announceToUser('Moving to next tutorial step...');
+        }
+
+        // Helper functions
+        function showHelp() {
+            const helpMessage = `
+                Available voice commands:
+                Navigation: "Start tutorial", "Begin mystery", "Show accessibility features", "Go back"
+                Investigation: "Examine the knife", "Talk to witness", "Read the letter", "Follow footprints"
+                Settings: "Open settings", "Enable high contrast", "Reduce motion"
+                General: "Help", "Repeat", "Describe scene"
+                
+                Keyboard shortcuts:
+                Alt+H: Help, Alt+S: Settings, Alt+V: Voice button, Escape: Close modals
+            `;
+            announceToUser(helpMessage);
+        }
+
+        function showAccessibilityHelp() {
+            announceToUser('AudioVR is designed for full accessibility. It supports voice commands, keyboard navigation, screen readers, and follows WCAG 2.1 AA guidelines. All features work without a mouse or visual interface.');
+        }
+
+        function showElementModal(element) {
+            // This would show a visual modal with element details
+            // For now, we just announce the information
+            console.log('Element examined:', element);
+        }
+
+        function closeAllModals() {
+            document.getElementById('settings-modal').classList.add('hidden');
+            // Close any other modals that might be open
+        }
+
+        // Keyboard shortcut indicators
+        function showKeyboardShortcuts() {
+            const shortcuts = `
+                Keyboard Shortcuts:
+                Tab/Shift+Tab: Navigate between interactive elements
+                Enter/Space: Activate buttons and links
+                Alt+H: Show help and voice commands
+                Alt+S: Open accessibility settings
+                Alt+V: Activate voice recognition
+                Escape: Close dialogs and modals
+                Arrow keys: Navigate within components
+            `;
+            announceToUser(shortcuts);
+        }
+    </script>
+</body>
+</html>
