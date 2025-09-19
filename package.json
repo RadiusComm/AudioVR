@@ -1,0 +1,55 @@
+{
+  "name": "audiovr-complete",
+  "version": "1.0.0",
+  "description": "Complete AudioVR - AI-Powered Detective Mystery Platform",
+  "main": "src/app/page.tsx",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "type-check": "tsc --noEmit",
+    "deploy": "vercel --prod",
+    "deploy:preview": "vercel",
+    "test": "jest",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "@heroicons/react": "^2.0.18",
+    "@supabase/auth-helpers-nextjs": "^0.8.7",
+    "@supabase/supabase-js": "^2.38.0",
+    "framer-motion": "^10.16.5",
+    "next": "^14.0.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hot-toast": "^2.4.1",
+    "tailwindcss": "^3.3.6",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "axios": "^1.6.0",
+    "zod": "^3.22.4",
+    "use-sound": "^4.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.8.10",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@typescript-eslint/eslint-plugin": "^6.9.1",
+    "@typescript-eslint/parser": "^6.9.1",
+    "eslint": "^8.53.0",
+    "eslint-config-next": "^14.0.4",
+    "typescript": "^5.2.2"
+  },
+  "keywords": [
+    "detective-mystery",
+    "ai-voice",
+    "audio-games",
+    "elevenlabs",
+    "supabase",
+    "nextjs",
+    "vercel"
+  ],
+  "author": "AudioVR Team",
+  "license": "MIT"
+}
